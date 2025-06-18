@@ -1,1 +1,25 @@
+################## Docker file ######################
+# Use miniconda base image
+FROM continuumio/miniconda3
 
+LABEL maintainer="Sandeep Kumar Kushwaha"
+LABEL description="Bioinformatics container with pinned tool versions"
+
+# Copy Conda environment file
+COPY environment.yml .
+
+# Update conda and create the environment
+RUN conda update -n base -c defaults conda -y && \
+    conda env create -f environment.yml && \
+    conda clean -a
+
+# Activate conda environment by default
+SHELL ["conda", "run", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
+
+# Copy your scripts into the container
+COPY ./scripts /opt/bioinfo/scripts
+
+WORKDIR /opt/bioinfo/scripts
+
+# Default command opens bash in the conda environment
+CMD ["bash"]
