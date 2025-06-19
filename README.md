@@ -3,8 +3,9 @@
 
 A bioinformatics pipeline to perfrom Meta-analysis of RNA-Seq data using uniform processing.
 This repository contains a complete, reproducible RNA-Seq analysis pipeline packaged in a Docker container. It automates alignment (HISAT2, STAR, Bowtie2) and differential gene expression analysis using DESeq2 and edgeR.
+
 📦 Features
-🔁 End-to-end automation: from raw FASTQ to DEG analysis
+🔁 End-to-end automation: fromAlignment to DEG analysis
 
 🐳 Dockerized: no dependency issues
 
