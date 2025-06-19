@@ -1,5 +1,5 @@
-################## Docker file ######################
-# Use miniconda base image
+################## Dockerfile ######################
+# Use Miniconda base image
 FROM continuumio/miniconda3
 
 LABEL maintainer="Sandeep Kumar Kushwaha"
@@ -8,7 +8,7 @@ LABEL description="Bioinformatics container with pinned tool versions"
 # Copy Conda environment file
 COPY environment.yml .
 
-# Update conda and create the environment
+# Update conda and create environment
 RUN conda update -n base -c defaults conda -y && \
     conda env create -f environment.yml && \
     conda clean -a
@@ -16,10 +16,18 @@ RUN conda update -n base -c defaults conda -y && \
 # Activate conda environment by default
 SHELL ["conda", "run", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
 
-# Copy your scripts into the container
-COPY ./scripts /opt/bioinfo/scripts
-
+# Set working directory
 WORKDIR /opt/bioinfo/scripts
 
-# Default command opens bash in the conda environment
+# Copy all analysis scripts
+COPY ./scripts /opt/bioinfo/scripts
+
+# Make all shell scripts and R scripts executable
+RUN chmod +x *.sh && chmod +x *.R
+
+# Optionally: Add wrapper to PATH (if you want simplified command)
+# COPY ./scripts/run_deseq2.sh /usr/local/bin/run_deseq2.sh
+# RUN chmod +x /usr/local/bin/run_deseq2.sh
+
+# Default to interactive bash shell (change if needed)
 CMD ["bash"]
