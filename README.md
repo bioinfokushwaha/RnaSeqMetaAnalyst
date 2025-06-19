@@ -22,27 +22,27 @@ project_root/
 │
 |
 ├── data/
-|
+
 │   ├── sample1_R1.fastq.gz
-|   |
+
 │   ├── sample1_R2.fastq.gz
-|   |
+
 │   └── ...
-|
+
 │
-|
+
 ├── sampleinfo/
-|
+
 │   └── sampleinfo.txt
-|
+
 │
-|
+
 ├── DEG/
-|   |
+   
 │   └── (output will be written here)
-|
+
 │
-|
+
 ├── bioinfo_pipeline/
 |
 
