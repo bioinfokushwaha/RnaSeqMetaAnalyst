@@ -7,3 +7,39 @@ This repository contains a complete, reproducible RNA-Seq analysis pipeline pack
 ## Files
 
 ## Tools 
+## 📁 Project Directory Structure
+
+```
+project_root/
+│
+├── reference/                     # Reference genome and annotation
+│   ├── genome.fa                  # Genome FASTA file
+│   ├── genome.gtf                 # Annotation GTF file
+│   ├── hisat_index/               # HISAT2 index
+│   ├── bowtie2_index/             # Bowtie2 index
+│   └── star_index/                # STAR index
+│
+├── data/                          # Raw sequencing files
+│   ├── sample1_R1.fastq.gz
+│   ├── sample1_R2.fastq.gz
+│   └── ...
+│
+├── sampleinfo/
+│   └── sampleinfo.txt             # Sample condition metadata
+│
+├── DEG/                           # DEG results (edgeR/DESeq2)
+│   └── (generated output folders per comparison)
+│
+├── bioinfo_pipeline/
+│   ├── Dockerfile                 # Docker build file
+│   └── scripts/                   # Pipeline scripts
+│       ├── master.py              # Master controller script
+│       ├── run_all_edgeR.sh       # edgeR batch runner
+│       ├── run_all_deseq2.sh      # DESeq2 batch runner
+│       ├── run_edgeR_analysis.R   # edgeR DEG logic
+│       ├── run_deseq_222.R        # DESeq2 DEG logic
+│       ├── hisat_ok.sh            # HISAT2 aligner
+│       ├── bowtie.sh              # Bowtie2 aligner
+│       ├── star.sh                # STAR aligner
+│       └── (any other helper scripts)
+```
