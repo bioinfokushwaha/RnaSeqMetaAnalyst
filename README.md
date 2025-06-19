@@ -27,7 +27,8 @@ project_root/
 │
 ├── reference/                     # Reference genome and annotation
 │   ├── genome.fa                  # Genome FASTA file
-│   ├── genome.gtf                 # Annotation GTF file
+│   ├── genome.gtf
+|   |               # Annotation GTF file
 │   ├── hisat_index/               # HISAT2 index
 │   ├── bowtie2_index/             # Bowtie2 index
 │   └── star_index/                # STAR index
