@@ -1,33 +1,30 @@
 ################## Dockerfile ######################
-# Use Miniconda base image
+# Use miniconda base image
 FROM continuumio/miniconda3
 
 LABEL maintainer="Sandeep Kumar Kushwaha"
-LABEL description="Bioinformatics container with pinned tool versions"
+LABEL description="RNA-Seq Meta Analysis from alignment to DEG (HISAT2/STAR + DESeq2/edgeR)"
 
-# Copy Conda environment file
+# Set working directory
+WORKDIR /opt/bioinfo
+
+# Copy environment file and install dependencies
 COPY environment.yml .
-
-# Update conda and create environment
 RUN conda update -n base -c defaults conda -y && \
     conda env create -f environment.yml && \
     conda clean -a
 
-# Activate conda environment by default
+# Activate environment by default in bash
 SHELL ["conda", "run", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
 
-# Set working directory
+# Copy scripts folder into the container
+COPY ./scripts ./scripts
+
+# Ensure R scripts are executable
+RUN chmod +x ./scripts/*.sh && chmod +x ./scripts/*.R
+
+# Set working directory for the container
 WORKDIR /opt/bioinfo/scripts
 
-# Copy all analysis scripts
-COPY ./scripts /opt/bioinfo/scripts
-
-# Make all shell scripts and R scripts executable
-RUN chmod +x *.sh && chmod +x *.R
-
-# Optionally: Add wrapper to PATH (if you want simplified command)
-# COPY ./scripts/run_deseq2.sh /usr/local/bin/run_deseq2.sh
-# RUN chmod +x /usr/local/bin/run_deseq2.sh
-
-# Default to interactive bash shell (change if needed)
+# Default command
 CMD ["bash"]
