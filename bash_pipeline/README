@@ -1,1 +1,14 @@
 Can run without docker.
+## Requirements:
+1.	Data/genome should have gff, gtf and fna files.
+2.	Change the name of paired end reads files –
+for file in *_1.fastq.gz; do mv "$file" "${file/_1.fastq.gz/_R1.fastq.gz}"; done
+for file in *_2.fastq.gz; do mv "$file" "${file/_2.fastq.gz/_R2.fastq.gz}"; done
+3.	Give sample info file in data/sampleinfo.txt
+4.	Download and gzip -d genome files.
+5.	Download raw reads in the data/raw.
+6.	Keep all the scripts in main directory.
+7.	Make sure that all the files are executable. #chmod +x filename
+
+ 
+
