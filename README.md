@@ -19,7 +19,36 @@ This repository contains a complete, reproducible RNA-Seq analysis pipeline pack
 # Requirements
 ## Files
 
-## Tools 
+## Tools Used
+The following tools and packages were used in this RNA-seq analysis pipeline:
+
+    FastQC – for raw sequence quality control
+
+    Fastp – for trimming and filtering of reads
+
+    MultiQC – for aggregating QC reports
+
+    STAR – for spliced alignment to the genome
+
+    Hisat2 – for efficient alignment of RNA-seq reads
+
+    Bowtie2 – for general sequence alignment
+
+    HTSeq – for counting reads mapped to genes
+
+    FeatureCounts – for efficient read summarization
+
+    RSEM – for transcript quantification
+
+    R Packages:
+
+        DESeq2 – differential expression analysis
+
+        edgeR – differential expression analysis
+
+        dplyr – data manipulation
+
+        openxlsx – Excel output handling
 ## 📁 Project Directory Structure
 
 ```
