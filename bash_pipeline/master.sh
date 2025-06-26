@@ -25,9 +25,9 @@ source config.sh
 ./star.sh
 
 # == === cleaning_scripts ===
-./DEG/star_clean.sh
-./DEG/bowtie_clean.sh
-./DEG/hisat2_clean.sh
+./star_clean.sh
+./bowtie_clean.sh
+./hisat2_clean.sh
 
 # === Step 6: Differential Expression Analysis ===
 
