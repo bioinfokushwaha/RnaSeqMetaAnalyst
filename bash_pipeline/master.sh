@@ -20,9 +20,9 @@ source config.sh
 ./quality_control.sh
 
 # === Step 3: Alignment ===
-./hisat2.sh
-./bowtie.sh
-./star.sh
+./DEG/hisat2.sh
+./DEG/bowtie.sh
+./DEG/star.sh
 
 # == === cleaning_scripts ===
 ./star_clean.sh
