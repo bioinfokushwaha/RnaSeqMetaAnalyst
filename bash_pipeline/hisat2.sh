@@ -132,5 +132,4 @@ mkdir -p "$DEST"
 echo "Copying Hisat2 merged files..."
 cp Quantification/Hisat2/FC/FC_Count.txt "$DEST/H_FC_Count.txt"
 cp Quantification/Hisat2/HT/HTSeq_Count_union.txt "$DEST/H_HTSeq_Count_union.txt"
-# Uncomment below if RSEM exists for Hisat2
-# cp Quantification/Hisat2/RSEM/rsem_gene_tpm_matrix.txt "$DEST/H_rsem_gene_tpm_matrix.txt"
+cp data/sampleinfo.txt "$DEST"
