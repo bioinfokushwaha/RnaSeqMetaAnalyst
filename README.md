@@ -104,17 +104,7 @@ docker build -t rnaseq-metaanalyst .
 
 ## 4) Run the pipeline (adjust paths if needed)
 ```
-docker run -it --rm \
-  -v "$PWD/../../data":/data \
-  -v "$PWD/../../counts":/counts \
-  -v "$PWD/../../output":/output \
-  -e THREADS=16 \
-  -e MODE="PE" \
-  -e GENOME_DIR="/data/genome" \
-  -e READ_DIR="/data/Trim" \
-  -e GTF="/data/genome/annotation.gtf" \
-  -e FASTA="/data/genome/genome.fa" \
-  rnaseq-metaanalyst \
-  bash /opt/bioinfo_pipeline/controller.sh
+docker run -it --rm -v "$PWD/../../data":/data -v "$PWD/../../counts":/counts -v "$PWD/../../output":/output -e THREADS=16 -e MODE="  " -e GENOME_DIR="/data/genome" -e READ_DIR="/data/raw/" -e GTF="/data/genome/annotation.gtf" -e FASTA="/data/genome/genome.fa"  rnaseq-metaanalyst bash ./master.sh
 
 ```
+Note: MODE="SE" if single end files; MODE="PE" if paired end files;
