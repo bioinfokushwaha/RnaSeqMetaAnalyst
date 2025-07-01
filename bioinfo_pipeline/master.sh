@@ -1,11 +1,10 @@
 #!/bin/bash
-# Set global variables
-#!/bin/bash
 
-set -e
-set -x
 
-# Use environment variables (passed via Docker)
+set -e  # Exit on any error
+set -x  # Print each command before executing (for debugging)
+
+# === Show Environment Variables (set via Docker `-e`) ===
 echo "THREADS: $THREADS"
 echo "MODE: $MODE"
 echo "GENOME_DIR: $GENOME_DIR"
@@ -13,14 +12,18 @@ echo "READ_DIR: $READ_DIR"
 echo "GTF: $GTF"
 echo "FASTA: $FASTA"
 
-set -e  # Stop if any script fails
-set -x  # Print each command for debugging
+# === Export Variables for Subscripts ===
+export THREADS
+export MODE
+export GENOME_DIR
+export READ_DIR
+export GTF
+export FASTA
 
 mkdir -p DEG Indices/Bowtie Mapping/Bowtie Quantification/Bowtie/{HT,FC,RSEM}
 mkdir -p DEG Indices/Hisat2 Mapping/Hisat2 Quantification/Hisat2/{HT,FC}
 mkdir -p DEG Indices/STAR Mapping/STAR Quantification/STAR/{HT,FC,RSEM}
-# === Load Config ===
-source config.sh
+
 
 # === Step 1: Quality Control ===
 ./quality_control.sh
