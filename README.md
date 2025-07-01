@@ -104,6 +104,17 @@ docker build -t rnaseq-metaanalyst .
 
 ## 4) Run the pipeline (adjust paths if needed)
 ```
-docker run -it -v "$PWD/data":/data -v "$PWD/counts":/counts  -v "$PWD/output":/output  rnaseq-metaanalyst python /opt/bioinfo/scripts/master.py
+docker run -it --rm \
+  -v "$PWD/../../data":/data \
+  -v "$PWD/../../counts":/counts \
+  -v "$PWD/../../output":/output \
+  -e THREADS=16 \
+  -e MODE="PE" \
+  -e GENOME_DIR="/data/genome" \
+  -e READ_DIR="/data/Trim" \
+  -e GTF="/data/genome/annotation.gtf" \
+  -e FASTA="/data/genome/genome.fa" \
+  rnaseq-metaanalyst \
+  bash /opt/bioinfo/controller.sh
 
 ```
