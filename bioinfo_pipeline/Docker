@@ -1,5 +1,4 @@
 ################## Dockerfile ######################
-# Use miniconda base image
 FROM continuumio/miniconda3
 
 LABEL maintainer="Sandeep Kumar Kushwaha"
@@ -12,18 +11,18 @@ WORKDIR /opt/bioinfo
 COPY environment.yml .
 RUN conda update -n base -c defaults conda -y && \
     conda env create -f environment.yml && \
-    conda clean -a
+    conda clean --all --yes
 
-# Activate environment by default in bash
-SHELL ["conda", "run", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
+# Activate environment by default for all RUN and CMD
+SHELL ["conda", "run", "--no-capture-output", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
 
 # Copy scripts folder into the container
 COPY ./scripts ./scripts
 
-# Ensure R scripts are executable
+# Make scripts executable
 RUN chmod +x ./scripts/*.sh && chmod +x ./scripts/*.R
 
-# Set working directory for the container
+# Final working directory
 WORKDIR /opt/bioinfo/scripts
 
 # Default command
