@@ -1,29 +1,22 @@
-################## Dockerfile ######################
 FROM continuumio/miniconda3
 
 LABEL maintainer="Sandeep Kumar Kushwaha"
 LABEL description="RNA-Seq Meta Analysis from alignment to DEG (HISAT2/STAR + DESeq2/edgeR)"
 
-# Set working directory
 WORKDIR /opt/bioinfo
 
-# Copy environment file and install dependencies
 COPY environment.yml .
 RUN conda update -n base -c defaults conda -y && \
     conda env create -f environment.yml && \
     conda clean --all --yes
 
-# Activate environment by default for all RUN and CMD
 SHELL ["conda", "run", "--no-capture-output", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
 
-# Copy scripts folder into the container
 COPY . .
 
-# Make scripts executable
 RUN chmod +x *.sh && chmod +x *.R
 
-# Final working directory
 WORKDIR /opt/bioinfo/
 
-# Default command
 CMD ["bash"]
+
