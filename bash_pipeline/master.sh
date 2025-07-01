@@ -1,11 +1,11 @@
 #!/bin/bash
 # Set global variables
-export THREADS=15
-export MODE="SE"
-export GENOME_DIR="data/genome"
-export READ_DIR="data/Trim"
-export GTF="data/genome"
-export FASTA="data/genome"
+echo "THREADS: $THREADS"
+echo "MODE: $MODE"
+echo "GENOME_DIR: $GENOME_DIR"
+echo "READ_DIR: $READ_DIR"
+echo "GTF: $GTF"
+echo "FASTA: $FASTA"
 
 set -e  # Stop if any script fails
 set -x  # Print each command for debugging
