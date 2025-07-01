@@ -115,6 +115,6 @@ docker run -it --rm \
   -e GTF="/data/genome/annotation.gtf" \
   -e FASTA="/data/genome/genome.fa" \
   rnaseq-metaanalyst \
-  bash /opt/bioinfo/controller.sh
+  bash /opt/bioinfo_pipeline/controller.sh
 
 ```
