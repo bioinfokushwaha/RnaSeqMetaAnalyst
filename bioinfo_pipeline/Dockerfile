@@ -20,10 +20,10 @@ SHELL ["conda", "run", "--no-capture-output", "-n", "16_ppl_bioinfo-env", "/bin/
 COPY . .
 
 # Make scripts executable
-RUN chmod +x ./scripts/*.sh && chmod +x ./scripts/*.R
+RUN chmod +x *.sh && chmod +x *.R
 
 # Final working directory
-WORKDIR /opt/bioinfo/scripts
+WORKDIR /opt/bioinfo/
 
 # Default command
 CMD ["bash"]
