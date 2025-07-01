@@ -4,7 +4,7 @@
 set -e
 
 # Name of your conda environment
-ENV_NAME="rnaseq"
+ENV_NAME="16_ppl_bioinfo-env"
 
 # Activate conda environment
 source /opt/conda/etc/profile.d/conda.sh
