@@ -3,9 +3,12 @@
 set -e
 set -x
 
-# Use Docker-passed variables
-RAW_DIR="$READ_DIR"                        # Raw reads passed from Docker
-TRIM_DIR="data/Trim"                       # Final trimmed reads for downstream
+# Enable nullglob so unmatched globs expand to nothing (avoids literal '*.fastq.gz')
+shopt -s nullglob
+
+# Docker-passed variables
+RAW_DIR="$READ_DIR"
+TRIM_DIR="data/Trim"
 FASTQC_BEFORE="qc/fastqc_raw"
 FASTQC_AFTER="qc/fastqc_clean"
 FASTP_REPORTS="qc/fastp_reports"
@@ -21,9 +24,20 @@ echo "Output (trimmed reads): $TRIM_DIR"
 # === PE MODE ===
 if [[ "$MODE" == "PE" ]]; then
     echo ">>> Running in Paired-End mode..."
-    for R1 in "$RAW_DIR"/*_R1.fastq.gz; do
+    FILES=("$RAW_DIR"/*_R1.fastq.gz)
+    if [[ ${#FILES[@]} -eq 0 ]]; then
+        echo "❌ No paired-end (_R1.fastq.gz) files found in $RAW_DIR"
+        exit 1
+    fi
+
+    for R1 in "${FILES[@]}"; do
         SAMPLE=$(basename "$R1" _R1.fastq.gz)
         R2="$RAW_DIR/${SAMPLE}_R2.fastq.gz"
+
+        if [[ ! -f "$R2" ]]; then
+            echo "❌ Missing R2 pair for sample $SAMPLE"
+            continue
+        fi
 
         echo "Processing sample: $SAMPLE"
 
@@ -46,15 +60,22 @@ if [[ "$MODE" == "PE" ]]; then
 # === SE MODE ===
 else
     echo ">>> Running in Single-End mode..."
-    for R in $RAW_DIR/*.fastq.gz; do
-        if [[ "$R" == *_R1.fastq.gz || "$R" == *_R2.fastq.gz ]]; then
-            continue  # Skip PE reads in SE mode
+    FILES=("$RAW_DIR"/*.fastq.gz)
+    if [[ ${#FILES[@]} -eq 0 ]]; then
+        echo "❌ No single-end fastq.gz files found in $RAW_DIR"
+        exit 1
+    fi
+
+    for R in "${FILES[@]}"; do
+        BASENAME=$(basename "$R")
+        if [[ "$BASENAME" == *_R1.fastq.gz || "$BASENAME" == *_R2.fastq.gz ]]; then
+            continue  # Skip paired-end files
         fi
 
         SAMPLE=$(basename "$R" .fastq.gz)
         echo "Processing sample: $SAMPLE"
 
-        fastqc -t $THREADS -o "$FASTQC_BEFORE" "$R"
+        fastqc -t "$THREADS" -o "$FASTQC_BEFORE" "$R"
 
         fastp -w "$THREADS" \
             -i "$R" \
