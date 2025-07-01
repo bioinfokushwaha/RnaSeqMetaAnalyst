@@ -102,7 +102,7 @@ cd RnaSeqMetaAnalyst/bioinfo_pipeline
 docker build -t rnaseq-metaanalyst .
 ```
 
-## 4) Run the pipeline (adjust paths if needed)
+## 4) Run the pipeline (adjust paths if needed and also MODE)
 ```
 docker run -it --rm -v "$PWD/../../data":/data -v "$PWD/../../counts":/counts -v "$PWD/../../output":/output -e THREADS=16 -e MODE="  " -e GENOME_DIR="/data/genome" -e READ_DIR="/data/raw/" -e GTF="/data/genome/annotation.gtf" -e FASTA="/data/genome/genome.fa"  rnaseq-metaanalyst bash ./master.sh
 
