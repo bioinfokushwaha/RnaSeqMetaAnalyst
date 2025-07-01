@@ -86,16 +86,24 @@ project_root/
 │       ├── star.sh                # STAR aligner
 │       └── (any other helper scripts)
 ```
-<pre> 
-   # Clone the repository
-git clone https://github.com/bioinfokushwaha/RnaSeqMetaAnalyst.git
 
-# Move into the pipeline directory
+   ## Clone the repository
+```
+git clone https://github.com/bioinfokushwaha/RnaSeqMetaAnalyst.git
+```
+
+## Move into the pipeline directory
+```
 cd RnaSeqMetaAnalyst/bioinfo_pipeline
+```
 
 # Build the Docker image
+```
 docker build -t rnaseq-metaanalyst .
+```
 
 # Run the pipeline (adjust paths if needed)
+```
 docker run -it -v "$PWD/data":/data -v "$PWD/counts":/counts  -v "$PWD/output":/output  rnaseq-metaanalyst python /opt/bioinfo/scripts/master.py
- </pre>
+
+```
