@@ -1,100 +1,113 @@
-RAW_DIR="data/raw"
-READ_DIR="data/Trim"           # Final trimmed reads for downstream
-FASTQC_BEFORE="qc/fastqc_raw"
-FASTQC_AFTER="qc/fastqc_clean"
-FASTP_REPORTS="qc/fastp_reports"
-MULTIQC_DIR="qc/multiqc"
+#!/bin/bash
+
+# === INPUT FROM ENV VARIABLES PASSED BY DOCKER ===
+RAW_DIR="$READ_DIR"                  # e.g., /data/raw
+TRIM_DIR="/data/Trim"               # Where trimmed reads go
+
+# === QC OUTPUT PATHS ===
+FASTQC_BEFORE="/opt/bioinfo/qc/fastqc_raw"
+FASTQC_AFTER="/opt/bioinfo/qc/fastqc_clean"
+FASTP_REPORTS="/opt/bioinfo/qc/fastp_reports"
+MULTIQC_DIR="/opt/bioinfo/qc/multiqc"
 
 # === CREATE OUTPUT DIRECTORIES ===
-mkdir -p "$READ_DIR" "$FASTQC_BEFORE" "$FASTQC_AFTER" "$FASTP_REPORTS" "$MULTIQC_DIR"
+mkdir -p "$TRIM_DIR" "$FASTQC_BEFORE" "$FASTQC_AFTER" "$FASTP_REPORTS" "$MULTIQC_DIR"
 
-echo "Processing mode: $MODE"
-echo "Input directory: $RAW_DIR"
-echo "Output (trimmed reads): $READ_DIR"
+echo "📦 MODE: $MODE"
+echo "📂 RAW input: $RAW_DIR"
+echo "📂 Trimmed output: $TRIM_DIR"
+echo "💻 Threads: $THREADS"
 
-if [[ $MODE == "PE" ]]; then
-    echo ">>> Running in Paired-End mode..."
+# === QC PIPELINE ===
+if [[ "$MODE" == "PE" ]]; then
+    echo "🔄 Running in Paired-End mode..."
+
     for R1 in "$RAW_DIR"/*_R1.fastq.gz; do
+        [[ ! -e "$R1" ]] && echo "⚠️ No *_R1.fastq.gz files in $RAW_DIR" && continue
+
         SAMPLE=$(basename "$R1" _R1.fastq.gz)
         R2="$RAW_DIR/${SAMPLE}_R2.fastq.gz"
 
-        echo "Processing sample: $SAMPLE"
+        if [[ ! -f "$R2" ]]; then
+            echo "❌ Missing R2 file for $SAMPLE"
+            continue
+        fi
 
-        # FastQC BEFORE
-        fastqc -t $THREADS -o "$FASTQC_BEFORE" "$R1" "$R2"
+        echo "🧪 Processing sample: $SAMPLE"
+
+        # Run FastQC BEFORE
+        fastqc -t "$THREADS" -o "$FASTQC_BEFORE" "$R1" "$R2"
 
         # Run fastp
-        fastp -w $THREADS \
+        fastp -w "$THREADS" \
             -i "$R1" -I "$R2" \
-            -o "$READ_DIR/${SAMPLE}_R1_trimmed.fastq.gz" \
-            -O "$READ_DIR/${SAMPLE}_R2_trimmed.fastq.gz" \
+            -o "$TRIM_DIR/${SAMPLE}_R1_trimmed.fastq.gz" \
+            -O "$TRIM_DIR/${SAMPLE}_R2_trimmed.fastq.gz" \
             -h "$FASTP_REPORTS/${SAMPLE}_fastp.html" \
             -j "$FASTP_REPORTS/${SAMPLE}_fastp.json"
 
-        # FastQC AFTER
-        fastqc -t $THREADS -o "$FASTQC_AFTER" \
-            "$READ_DIR/${SAMPLE}_R1_trimmed.fastq.gz" \
-            "$READ_DIR/${SAMPLE}_R2_trimmed.fastq.gz"
+        # Run FastQC AFTER
+        fastqc -t "$THREADS" -o "$FASTQC_AFTER" \
+            "$TRIM_DIR/${SAMPLE}_R1_trimmed.fastq.gz" \
+            "$TRIM_DIR/${SAMPLE}_R2_trimmed.fastq.gz"
 
-        echo "--- Done with sample: $SAMPLE ---"
+        echo "✅ Done with sample: $SAMPLE"
     done
 
 else
-    echo ">>> Running in Single-End mode..."
+    echo "🔄 Running in Single-End mode..."
+
     for R in "$RAW_DIR"/*.fastq.gz; do
-        if [[ "$R" == *_R.fastq.gz || "$R" == *_R.fastq.gz ]]; then
-            continue  # skip paired-end reads in SE mode
-        fi
+        [[ ! -e "$R" ]] && echo "⚠️ No *.fastq.gz files in $RAW_DIR" && continue
+
+        # Skip PE-style names just in case
+        [[ "$R" == *_R1.fastq.gz || "$R" == *_R2.fastq.gz ]] && continue
 
         SAMPLE=$(basename "$R" .fastq.gz)
 
-        echo "Processing sample: $SAMPLE"
+        echo "🧪 Processing sample: $SAMPLE"
 
-        # FastQC BEFORE
-        fastqc -t $THREADS -o "$FASTQC_BEFORE" "$R"
+        # Run FastQC BEFORE
+        fastqc -t "$THREADS" -o "$FASTQC_BEFORE" "$R"
 
         # Run fastp
-        fastp -w $THREADS \
+        fastp -w "$THREADS" \
             -i "$R" \
-            -o "$READ_DIR/${SAMPLE}_trimmed.fastq.gz" \
+            -o "$TRIM_DIR/${SAMPLE}_trimmed.fastq.gz" \
             -h "$FASTP_REPORTS/${SAMPLE}_fastp.html" \
             -j "$FASTP_REPORTS/${SAMPLE}_fastp.json"
 
-        # FastQC AFTER
-        fastqc -t $THREADS -o "$FASTQC_AFTER" \
-            "$READ_DIR/${SAMPLE}_trimmed.fastq.gz"
+        # Run FastQC AFTER
+        fastqc -t "$THREADS" -o "$FASTQC_AFTER" \
+            "$TRIM_DIR/${SAMPLE}_trimmed.fastq.gz"
 
-        echo "--- Done with sample: $SAMPLE ---"
+        echo "✅ Done with sample: $SAMPLE"
     done
 fi
 
-# === Run MultiQC ===
-echo "Running MultiQC..."
-multiqc qc/ -o "$MULTIQC_DIR"
+# === Run MultiQC on all QC results ===
+echo "📊 Running MultiQC..."
+multiqc /opt/bioinfo/qc/ -o "$MULTIQC_DIR"
+echo "📁 Final MultiQC report: $MULTIQC_DIR"
 
-echo "✅ fastp, fastqc, and MultiQC preprocessing complete."
-echo "📁 Final MultiQC report available at: $MULTIQC_DIR"
-####
-# === Rename and Decompress Final Files ===
+# === Final Rename and Decompress ===
 echo "🧼 Finalizing files: renaming and decompressing..."
 
-for FILE in "$READ_DIR"/*_trimmed.fastq.gz; do
+for FILE in "$TRIM_DIR"/*_trimmed.fastq.gz; do
+    [[ ! -f "$FILE" ]] && continue
+
     BASENAME=$(basename "$FILE" _trimmed.fastq.gz)
-    TEMP_NAME="$READ_DIR/${BASENAME}.fastq.gz"
-    FINAL_NAME="$READ_DIR/${BASENAME}.fastq"
+    RENAMED="$TRIM_DIR/${BASENAME}.fastq.gz"
+    FINAL="$TRIM_DIR/${BASENAME}.fastq"
 
-#    # Rename trimmed file to remove "_trimmed"
-    mv "$FILE" "$TEMP_NAME"
+    mv "$FILE" "$RENAMED"
 
-    # Decompress only if final .fastq doesn't already exist
-    if [[ ! -f "$FINAL_NAME" ]]; then
-        echo "Decompressing: $TEMP_NAME"
-        gunzip "$TEMP_NAME"
+    if [[ ! -f "$FINAL" ]]; then
+        echo "🗜️ Decompressing: $RENAMED"
+        gunzip "$RENAMED"
     else
-        echo "⚠️  Skipping decompression for $TEMP_NAME — $FINAL_NAME already exists."
+        echo "⚠️ Already exists: $FINAL — skipping decompression"
     fi
 done
 
 echo "✅ All files renamed and decompressed successfully."
-
-
