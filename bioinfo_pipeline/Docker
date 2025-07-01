@@ -17,7 +17,7 @@ RUN conda update -n base -c defaults conda -y && \
 SHELL ["conda", "run", "--no-capture-output", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
 
 # Copy scripts folder into the container
-COPY ./scripts ./scripts
+COPY . .
 
 # Make scripts executable
 RUN chmod +x ./scripts/*.sh && chmod +x ./scripts/*.R
