@@ -46,7 +46,7 @@ if [[ "$MODE" == "PE" ]]; then
 # === SE MODE ===
 else
     echo ">>> Running in Single-End mode..."
-    for R in "$RAW_DIR"/*.fastq.gz; do
+    for R in $RAW_DIR/*.fastq.gz; do
         if [[ "$R" == *_R1.fastq.gz || "$R" == *_R2.fastq.gz ]]; then
             continue  # Skip PE reads in SE mode
         fi
@@ -54,7 +54,7 @@ else
         SAMPLE=$(basename "$R" .fastq.gz)
         echo "Processing sample: $SAMPLE"
 
-        fastqc -t "$THREADS" -o "$FASTQC_BEFORE" "$R"
+        fastqc -t $THREADS -o "$FASTQC_BEFORE" "$R"
 
         fastp -w "$THREADS" \
             -i "$R" \
