@@ -29,9 +29,9 @@ mkdir -p DEG Indices/STAR Mapping/STAR Quantification/STAR/{HT,FC,RSEM}
 ./quality_control.sh
 
 # === Step 3: Alignment ===
-./DEG/hisat2.sh
-./DEG/bowtie.sh
-./DEG/star.sh
+./hisat2.sh
+./bowtie.sh
+./star.sh
 
 # == === cleaning_scripts ===
 ./star_clean.sh
