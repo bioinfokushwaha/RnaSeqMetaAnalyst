@@ -33,9 +33,7 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
 # Create conda environment from environment.yml
-RUN conda update -n base -c defaults conda && \
-    conda env create -f /tmp/environment.yml && \
-    conda clean -afy
+RUN SSL_NO_VERIFY=1 conda env create -f /tmp/environment.yml && conda clean -afy
 
 # Activate environment by default
 SHELL ["conda", "run", "--no-capture-output", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
