@@ -1,66 +1,78 @@
 #!/bin/bash
 
 set -e  # Exit on any error
-set -x  # Print each command
+set -x  # Print commands for debugging
 
-# === Step 0: Echo Environment Variables Passed from Docker ===
-echo "[INFO] THREADS:       $THREADS"
-echo "[INFO] MODE:          $MODE"
-echo "[INFO] PROJECT_NAME:  $PROJECT_NAME"
-echo "[INFO] GENOME_DIR:    $GENOME_DIR"
-echo "[INFO] READ_DIR:      $READ_DIR"
-echo "[INFO] GTF:           $GTF"
-echo "[INFO] FASTA:         $FASTA"
+# === Validate Required Environment Variables ===
+: "${THREADS:?THREADS is not set}"
+: "${MODE:?MODE is not set (should be SE or PE)}"
+: "${PROJECT_NAME:?PROJECT_NAME is not set}"
+: "${GENOME_DIR:?GENOME_DIR is not set}"
+: "${READ_DIR:?READ_DIR is not set}"
+: "${GTF:?GTF is not set}"
+: "${FASTA:?FASTA is not set}"
 
-# === Step 1: Export Variables for Subscripts ===
+# === Normalize MODE and Export Variables ===
+MODE=$(echo "$MODE" | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')  # Normalize to SE or PE
 export THREADS MODE PROJECT_NAME GENOME_DIR READ_DIR GTF FASTA
 
-# === Step 2: Define Output Directory Base ===
+# === Logging ===
+echo "=== RNA-Seq Master Pipeline Started at $(date) ==="
+echo "THREADS: $THREADS"
+echo "MODE: $MODE"
+echo "PROJECT_NAME: $PROJECT_NAME"
+echo "GENOME_DIR: $GENOME_DIR"
+echo "READ_DIR: $READ_DIR"
+echo "GTF: $GTF"
+echo "FASTA: $FASTA"
+
+# === Output Directory Base ===
 OUTPUT_BASE="/data/${PROJECT_NAME}/output"
-export OUTPUT_BASE
+export OUTPUT_BASE  # Export so subscripts can use it
 
-# === Step 3: Create Directory Structure ===
-mkdir -p \
-    "$OUTPUT_BASE/DEG" \
-    "$OUTPUT_BASE/Indices/Bowtie" \
-    "$OUTPUT_BASE/Mapping/Bowtie" \
-    "$OUTPUT_BASE/Quantification/Bowtie/HT" \
-    "$OUTPUT_BASE/Quantification/Bowtie/FC" \
-    "$OUTPUT_BASE/Quantification/Bowtie/RSEM" \
-    "$OUTPUT_BASE/Indices/Hisat2" \
-    "$OUTPUT_BASE/Mapping/Hisat2" \
-    "$OUTPUT_BASE/Quantification/Hisat2/HT" \
-    "$OUTPUT_BASE/Quantification/Hisat2/FC" \
-    "$OUTPUT_BASE/Quantification/Hisat2/RSEM" \
-    "$OUTPUT_BASE/Indices/STAR" \
-    "$OUTPUT_BASE/Mapping/STAR" \
-    "$OUTPUT_BASE/Quantification/STAR/HT" \
-    "$OUTPUT_BASE/Quantification/STAR/FC" \
-    "$OUTPUT_BASE/Quantification/STAR/RSEM"
+# === Create Output Directory Structure ===
+mkdir -p "$OUTPUT_BASE/DEG" \
+         "$OUTPUT_BASE/Indices/Bowtie" \
+         "$OUTPUT_BASE/Mapping/Bowtie" \
+         "$OUTPUT_BASE/Quantification/Bowtie/HT" \
+         "$OUTPUT_BASE/Quantification/Bowtie/FC" \
+         "$OUTPUT_BASE/Quantification/Bowtie/RSEM" \
+         "$OUTPUT_BASE/Indices/Hisat2" \
+         "$OUTPUT_BASE/Mapping/Hisat2" \
+         "$OUTPUT_BASE/Quantification/Hisat2/HT" \
+         "$OUTPUT_BASE/Quantification/Hisat2/FC" \
+         "$OUTPUT_BASE/Indices/STAR" \
+         "$OUTPUT_BASE/Mapping/STAR" \
+         "$OUTPUT_BASE/Quantification/STAR/HT" \
+         "$OUTPUT_BASE/Quantification/STAR/FC" \
+         "$OUTPUT_BASE/Quantification/STAR/RSEM"
 
-# === Step 4: Quality Control ===
-[ -x ./quality_control.sh ] && ./quality_control.sh || echo "[SKIP] quality_control.sh not found or not executable"
+# === Ensure Subscripts Are Executable ===
+chmod +x *.sh
 
-# === Step 5: Alignment Steps ===
-[ -x ./hisat2.sh ] && ./hisat2.sh || echo "[SKIP] hisat2.sh not found or not executable"
-[ -x ./bowtie.sh ] && ./bowtie.sh || echo "[SKIP] bowtie.sh not found or not executable"
-[ -x ./star.sh ] && ./star.sh || echo "[SKIP] star.sh not found or not executable"
+# === Run the Pipeline Steps ===
 
-# === Step 6: Clean Intermediate Files (Optional) ===
-[ -x ./hisat2_clean.sh ] && ./hisat2_clean.sh || echo "[SKIP] hisat2_clean.sh not found"
-[ -x ./bowtie_clean.sh ] && ./bowtie_clean.sh || echo "[SKIP] bowtie_clean.sh not found"
-[ -x ./star_clean.sh ] && ./star_clean.sh || echo "[SKIP] star_clean.sh not found"
+# Step 1: Quality Control
+./quality_control.sh
 
-# === Step 7: Differential Expression Analysis ===
-[ -x ./run_all_edgeR.sh ] && ./run_all_edgeR.sh || echo "[SKIP] run_all_edgeR.sh not found"
-[ -x ./run_all_deseq2.sh ] && ./run_all_deseq2.sh || echo "[SKIP] run_all_deseq2.sh not found"
+# Step 2: Alignment
+./hisat2.sh
+./bowtie.sh
+./star.sh
 
-# === Step 8: Optional R-based Analysis Scripts (Commented) ===
-# Uncomment below if you want to run these separately
+# Step 3: Clean intermediate files (optional)
+./star_clean.sh
+./bowtie_clean.sh
+./hisat2_clean.sh
+
+# Step 4: Differential Expression Analysis
+./run_all_edgeR.sh
+./run_all_deseq2.sh
+
+# Optional: R-based additional analysis (manually uncomment if needed)
 # Rscript run_deseq2_analysis.R
 # Rscript run_deseq222_analysis.R
 # Rscript run_edgeR_analysis.R
 
 # === Done ===
-echo "[DONE] Pipeline completed for project: $PROJECT_NAME"
-echo "[OUTPUT] Results located at: $OUTPUT_BASE"
+echo "=== RNA-Seq Master Pipeline Finished at $(date) ==="
