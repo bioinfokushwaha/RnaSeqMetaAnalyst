@@ -1,30 +1,48 @@
-FROM continuumio/miniconda3
+# Base image with Miniconda
+FROM continuumio/miniconda3:latest
 
-LABEL maintainer="Sandeep Kumar Kushwaha"
-LABEL description="RNA-Seq Meta Analysis from alignment to DEG (HISAT2/STAR + DESeq2/edgeR)"
+# Set environment variables
+ENV CONDA_ENV_NAME=16_ppl_bioinfo-env
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Copy environment.yml into the container
+COPY environment.yml /tmp/environment.yml
+
+# Install system packages required by bioinformatics tools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    liblzma-dev \
+    libbz2-dev \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    zlib1g-dev \
+    wget \
+    curl \
+    git \
+    unzip \
+    libncurses5-dev \
+    libncursesw5-dev \
+    locales \
+    ca-certificates \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set locale
+RUN locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+# Create conda environment from environment.yml
+RUN conda update -n base -c defaults conda && \
+    conda env create -f /tmp/environment.yml && \
+    conda clean -afy
+
+# Activate environment by default
+SHELL ["conda", "run", "--no-capture-output", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
 
 # Set working directory
-WORKDIR /opt/bioinfo
+WORKDIR /pipeline
 
-# Install conda environment
-COPY environment.yml .
-RUN conda update -n base -c defaults conda -y && \
-    conda env create -f environment.yml && \
-    conda clean --all --yes
-
-# Set shell to default bash (we'll handle env manually via entrypoint)
-SHELL ["/bin/bash", "-c"]
-
-# Copy pipeline scripts
-COPY . .
-
-# Make scripts executable
-RUN chmod +x *.sh *.R
-
-# Add entrypoint to run everything inside the conda environment
-COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
-
-ENTRYPOINT ["./entrypoint.sh"]
-CMD ["bash"]
+# Entrypoint into conda environment
+ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "16_ppl_bioinfo-env", "/bin/bash"]
 
