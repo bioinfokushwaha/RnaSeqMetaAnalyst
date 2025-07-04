@@ -3,17 +3,14 @@ FROM continuumio/miniconda3
 ENV ENV_NAME=16_ppl_bioinfo-env
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install mamba for faster environment resolution
+RUN conda install -n base -c conda-forge mamba
+
+# Copy environment definition
 COPY environment.yml /tmp/environment.yml
 
-# Create the conda environment
-RUN conda env create -f /tmp/environment.yml
-
-# Activate environment and install DESeq2 + GenomeInfoDbData from R
-SHELL ["conda", "run", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
-
-RUN Rscript -e "\
-  install.packages('BiocManager', repos='https://cloud.r-project.org'); \
-  BiocManager::install(c('DESeq2', 'edgeR', 'GenomeInfoDbData'), ask = FALSE, update = TRUE)"
+# Create conda environment using mamba
+RUN mamba env create -f /tmp/environment.yml
 
 # Activate environment by default on shell startup
 RUN echo "conda activate ${ENV_NAME}" >> ~/.bashrc
@@ -24,4 +21,5 @@ ENV PATH /opt/conda/envs/${ENV_NAME}/bin:$PATH
 # Copy entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
 ENTRYPOINT ["/entrypoint.sh"]
