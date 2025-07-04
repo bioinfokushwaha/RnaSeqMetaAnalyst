@@ -51,7 +51,7 @@ mkdir -p "$OUTPUT_BASE/DEG" \
 chmod +x *.sh
 
 # === Run the Pipeline Steps ===
-
+micromamba activate rnaseq-cli
 # Step 1: Quality Control
 ./quality_control.sh
 
@@ -65,6 +65,7 @@ chmod +x *.sh
 ./bowtie_clean.sh
 ./hisat2_clean.sh
 
+micromamba activate rnaseq-r
 # Step 4: Differential Expression Analysis
 ./run_all_edgeR.sh
 ./run_all_deseq2.sh
