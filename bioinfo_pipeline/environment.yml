@@ -1,5 +1,5 @@
 name: 16_ppl_bioinfo-env
-name: 16_ppl_bioinfo-env
+
 channels:
   - bioconda
   - conda-forge
