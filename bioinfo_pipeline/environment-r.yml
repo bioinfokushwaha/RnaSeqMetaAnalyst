@@ -1,1 +1,18 @@
-
+name: rnaseq-r
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - r-base=4.2
+  - r-dplyr
+  - r-tidyverse
+  - r-openxlsx
+  - bioconductor-deseq2
+  - bioconductor-edger
+  - bioconductor-biocgenerics
+  - bioconductor-biobase
+  - bioconductor-summarizedexperiment
+  - bioconductor-s4vectors
+  - bioconductor-matrixgenerics
+  - bioconductor-genomeinfodb
