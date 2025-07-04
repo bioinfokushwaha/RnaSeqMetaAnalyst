@@ -6,16 +6,17 @@ channels:
   - defaults
 
 dependencies:
+  # Core
   - python=3.8
   - conda
   - r-base=4.2.3
 
-  # QC tools
+  # Quality Control Tools
   - fastqc=0.11.9
   - fastp=0.23.2
   - multiqc=1.14
 
-  # Filtering
+  # rRNA Filtering
   - sortmerna=2.1b
 
   # Aligners
@@ -23,18 +24,23 @@ dependencies:
   - star=2.7.10b
   - bowtie2=2.4.5
 
-  # Quantification
-  - subread=2.0.6
+  # Quantification Tools
+  - subread=2.0.6          # includes featureCounts
   - htseq=0.13.5
   - rsem=1.3.3
   - samtools=1.15.1
 
-  # R packages
+  # R packages (CRAN)
   - r-dplyr=1.1.4
   - r-openxlsx=4.2.5.2
   - r-tidyverse=2.0.0
 
-  # Bioconductor packages via bioconda
-  - bioconductor-deseq2=1.40.2
-  - bioconductor-edger=3.42.4
-  - bioconductor-genomeinfodbdata=1.2.9
+  # Bioconductor packages (compatible with R 4.2.3 / Bioc 3.16)
+  - bioconductor-deseq2=1.36.0
+  - bioconductor-edger=3.40.2
+  - bioconductor-genomeinfodb=1.32.4
+  - bioconductor-biobase=2.58.0
+  - bioconductor-s4vectors=0.36.0
+  - bioconductor-summarizedexperiment=1.28.0
+  - bioconductor-biocgenerics=0.44.0
+  - bioconductor-matrixgenerics=1.10.0
