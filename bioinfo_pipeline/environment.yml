@@ -34,5 +34,6 @@ dependencies:
   - r-tidyverse=2.0.0
 
   # Bioconductor tools
+  - bioconductor-genomeinfodbdata
   - bioconductor-deseq2=1.40.0
   - bioconductor-edger=3.42.4
