@@ -8,7 +8,7 @@ channels:
 dependencies:
   - python=3.8
   - conda
-  - r-base=4.3.2
+  - r-base=4.2.3
 
   # QC tools
   - fastqc=0.11.9
