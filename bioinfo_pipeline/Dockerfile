@@ -13,7 +13,7 @@ SHELL ["conda", "run", "-n", "16_ppl_bioinfo-env", "/bin/bash", "-c"]
 
 RUN Rscript -e "\
   install.packages('BiocManager', repos='https://cloud.r-project.org'); \
-  BiocManager::install(c('DESeq2', 'GenomeInfoDbData'), ask = FALSE, update = TRUE)"
+  BiocManager::install(c('DESeq2', 'edgeR', 'GenomeInfoDbData'), ask = FALSE, update = TRUE)"
 
 # Activate environment by default on shell startup
 RUN echo "conda activate ${ENV_NAME}" >> ~/.bashrc
