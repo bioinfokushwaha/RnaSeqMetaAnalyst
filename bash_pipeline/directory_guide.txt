@@ -1,7 +1,7 @@
 project_root/
 ├── data/
 │   ├── genome/          
-│   ├── reads/
+│   ├── raw/
 │    └──Trim/
 ├── qc/
 │     ├── fastp_reports/                
