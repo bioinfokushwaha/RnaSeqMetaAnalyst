@@ -104,7 +104,8 @@ docker build -t rnaseq-metaanalyst .
 
 ## 4) Run the pipeline (Adjust paths if needed as per your directory. Also the MODE as single or paired end)
 ```
-docker run -it --rm -v "$PWD/../../data":/data -v "$PWD/../../counts":/counts -v "$PWD/../../output":/output -e THREADS=16 -e MODE="  " -e GENOME_DIR="/data/genome" -e READ_DIR="/data/raw/" -e GTF="/data/genome/annotation.gtf" -e FASTA="/data/genome/genome.fa"  rnaseq-metaanalyst bash ./master.sh
+docker run --rm -it -e THREADS=8 -e MODE=SE -e GENOME_DIR=/genome/ -e READ_DIR=/raw/ -e TRIM_DIR=/Trim -e GTF=/genome/GCF_003369695.1_UOA_Brahman_1_genomic.gtf -e FASTA=/genome/GCF_003369695.1_UOA_Brahman_1_genomic.fna -e GFF=/genome/GCF_003369695.1_UOA_Brahman_1_genomic.gff -v "$(pwd)/raw/":/raw/ -v "$(pwd)/Trim/":/Trim/ -v "$(pwd)/genome/":/genome/ -v "$(pwd)/":/data rnaseq-metaanalyst bash /opt/project/scripts/master.sh
+
 
 ```
-Note: MODE="SE" if single end files; MODE="PE" if paired end files;
+Note: MODE="SE" if single end files; MODE="PE" if paired end files; The command given above is an example to understand. Change the input file names as required
