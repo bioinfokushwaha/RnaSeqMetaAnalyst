@@ -153,7 +153,7 @@ docker ps
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/rnaseq-meta-analyst.git
+git clone https://github.com/bioinfokushwaha/RnaSeqMetaAnalyst/tree/main/bioinfo_pipeline
 cd rnaseq-meta-analyst
 ```
 
