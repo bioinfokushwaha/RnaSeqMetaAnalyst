@@ -1,15 +1,19 @@
 #!/bin/bash
+set -e
 
-RSCRIPT="run_edgeR_analysis.R"
+RSCRIPT="/opt/project/scripts/run_edgeR_analysis.R"
 SAMPLEINFO="DEG/sampleinfo.txt"
 
-for count_file in DEG/*.txt; do
-    if [[ "$count_file" == *"sampleinfo.txt" ]]; then
-        continue
-    fi
+# Validate that the sample info path is set
+if [ -z "$SAMPLE_INFO_PATH" ] || [ ! -f "$SAMPLE_INFO_PATH" ]; then
+    echo "ERROR: SAMPLE_INFO_PATH is not set or sampleinfo.txt not found at '$SAMPLE_INFO_PATH'" >&2
+    exit 1
+fi
 
+# Loop through all cleaned CSV count files in the DEG directory
+for count_file in DEG/*_clean.txt; do
     echo "Running edgeR for $count_file"
-    Rscript "$RSCRIPT" "$count_file" "$SAMPLEINFO"
+    Rscript "$RSCRIPT" "$count_file" "$SAMPLE_INFO_PATH"
     echo "Finished $count_file"
     echo "-----------------------------"
 done

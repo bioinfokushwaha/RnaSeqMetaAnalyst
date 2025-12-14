@@ -1,202 +1,478 @@
-## BOWTIE SCRIPT ###
-## 
-# Index genome (uncomment if needed)
-bowtie2-build "$FASTA"/*fna Indices/Bowtie/Bowtie
-echo "Genome indexing completed."
-####### Mapping 
-if [[ $MODE == "PE" ]]; then
-    echo "Running in Paired-End mode..."
+#!/bin/bash
+# ===================================================================
+# BOWTIE2 COMPLETE PIPELINE: ALIGNMENT + QUANTIFICATION + RSEM
+# ===================================================================
+# This script performs:
+# 1. Bowtie2 genome indexing (if needed)
+# 2. RSEM reference preparation (if needed)
+# 3. Bowtie2 alignment (PE/SE mode)
+# 4. SAM to BAM conversion and sorting
+# 5. featureCounts quantification
+# 6. HTSeq quantification (with optimized piping)
+# 7. RSEM quantification
+# ===================================================================
 
-    for i in "$READ_DIR"/*_R1.fastq; do
-        SAMPLE=$(basename "$i" _R1.fastq)
-        R1="$READ_DIR/${SAMPLE}_R1.fastq"
-        R2="$READ_DIR/${SAMPLE}_R2.fastq"
+set -e  # Exit on error
+set -o pipefail  # Exit on pipe failure
 
-        echo "Processing sample: $SAMPLE"
-        bowtie2 -p $THREADS -x Indices/Bowtie/Bowtie \
-            -1 "$R1" -2 "$R2" \
-            -S Mapping/Bowtie/${SAMPLE}.sam \
-            2> Mapping/Bowtie/${SAMPLE}.log
+# === CONFIGURATION ===
+ALIGNER="Bowtie2"
+INDEX_BASE="Indices/Bowtie/genome"
+RSEM_INDEX_DIR="Indices/RSEM/Bowtie"
+MAPPING_DIR="Mapping/Bowtie"
+FC_OUTPUT_DIR="Quantification/Bowtie/FC"
+HTSEQ_OUTPUT_DIR="Quantification/Bowtie/HT"
+RSEM_OUTPUT_DIR="Quantification/Bowtie/RSEM"
 
-        echo "Converting SAM to BAM for $SAMPLE..."
-        samtools view -@ $THREADS -b Mapping/Bowtie/${SAMPLE}.sam > Mapping/Bowtie/${SAMPLE}.bam
-        rm Mapping/Bowtie/${SAMPLE}.sam
+# === CREATE DIRECTORIES ===
+mkdir -p "$MAPPING_DIR" "$FC_OUTPUT_DIR" "$HTSEQ_OUTPUT_DIR" "$RSEM_OUTPUT_DIR"
 
-        echo "Sorting and indexing BAM for $SAMPLE..."
-        samtools sort -@ $THREADS -o Mapping/Bowtie/${SAMPLE}_sorted.bam Mapping/Bowtie/${SAMPLE}.bam
-        mv Mapping/Bowtie/${SAMPLE}_sorted.bam Mapping/Bowtie/${SAMPLE}.bam
-        samtools index Mapping/Bowtie/${SAMPLE}.bam
-    done
+echo ""
+echo "=========================================="
+echo "BOWTIE2 COMPLETE PIPELINE (with RSEM)"
+echo "=========================================="
+echo "Mode: $MODE"
+echo "Threads: $THREADS"
+echo "Genome: $FASTA"
+echo "GTF: $GTF"
+echo ""
 
+# ===================================================================
+# STEP 1: BOWTIE2 INDEX PREPARATION
+# ===================================================================
+echo ""
+echo "=========================================="
+echo "STEP 1: Bowtie2 Index Preparation"
+echo "=========================================="
+
+# Check if we're using pre-built indices
+if [ -n "$INDEX_DIR" ] && [ -d "$INDEX_DIR/Bowtie" ]; then
+    echo ">>> Using pre-built Bowtie2 index from: $INDEX_DIR/Bowtie"
+    INDEX_BASE="$INDEX_DIR/Bowtie/genome"
+    if [ ! -f "${INDEX_BASE}.1.bt2" ]; then
+        echo "ERROR: Bowtie2 index not found at ${INDEX_BASE}.1.bt2" >&2
+        exit 1
+    fi
 else
-    echo "Running in Single-End mode..."
-
-    for i in "$READ_DIR"/*.fastq; do
-        SAMPLE=$(basename "$i" .fastq)
-        R1="$READ_DIR/${SAMPLE}.fastq"
-
-        echo "Processing sample: $SAMPLE"
-        bowtie2 -p $THREADS -x Indices/Bowtie/Bowtie \
-            -U "$R1" \
-            -S Mapping/Bowtie/${SAMPLE}.sam \
-            2> Mapping/Bowtie/${SAMPLE}.log
-
-        echo "Converting SAM to BAM for $SAMPLE..."
-        samtools view -@ $THREADS -b Mapping/Bowtie/${SAMPLE}.sam > Mapping/Bowtie/${SAMPLE}.bam
-        rm Mapping/Bowtie/${SAMPLE}.sam
-
-        echo "Sorting and indexing BAM for $SAMPLE..."
-        samtools sort -@ $THREADS -o Mapping/Bowtie/${SAMPLE}_sorted.bam Mapping/Bowtie/${SAMPLE}.bam
-        mv Mapping/Bowtie/${SAMPLE}_sorted.bam Mapping/Bowtie/${SAMPLE}.bam
-        samtools index Mapping/Bowtie/${SAMPLE}.bam
-    done
+    echo ">>> Building Bowtie2 index locally..."
+    mkdir -p "$(dirname "$INDEX_BASE")"
+    
+    if [ ! -f "${INDEX_BASE}.1.bt2" ]; then
+        echo "  Creating Bowtie2 index from: $FASTA"
+        # FIXED: Use --threads instead of -p for bowtie2-build
+        bowtie2-build --threads "$THREADS" "$FASTA" "$INDEX_BASE"
+        echo "  ✓ Bowtie2 index created successfully"
+    else
+        echo "  ✓ Bowtie2 index already exists"
+    fi
 fi
 
-########## HTSeq-count ##########
-echo "Running htseq-count sample-wise..."
-BOW_DIR="Quantification/Bowtie/HT"
-mkdir -p "$BOW_DIR"
+# ===================================================================
+# STEP 1.5: RSEM REFERENCE PREPARATION
+# ===================================================================
+echo ""
+echo "=========================================="
+echo "STEP 1.5: RSEM Reference Preparation"
+echo "=========================================="
 
-## Generate counts
-for BAM in Mapping/Bowtie/*.bam; do
-    SAMPLE=$(basename "$BAM" .bam)
-    echo "Counting for sample: $SAMPLE"
-    htseq-count -f bam -m union "$BAM" "$GTF"/*gtf > "$BOW_DIR/${SAMPLE}.htseq.txt"
-done
-# Merge htseq-count results
-echo "Merging htseq-count files into a count matrix..."
-
-cut -f1 "$(ls $BOW_DIR/*.htseq.txt | head -n1)" > "$BOW_DIR/gene_column.txt"
-
-for FILE in "$BOW_DIR"/*.htseq.txt; do
-    SAMPLE=$(basename "$FILE" .htseq.txt)
-    cut -f2 "$FILE" > "$BOW_DIR/${SAMPLE}_counts.txt"
-done
-
-paste "$BOW_DIR/gene_column.txt" "$BOW_DIR/"*_counts.txt > "$BOW_DIR/HTSeq_Count_union.txt"
-
-# Add header
-HEADER="Gene"
-for FILE in "$BOW_DIR"/*_counts.txt; do
-    SAMPLE=$(basename "$FILE" _counts.txt)
-    HEADER+="\t$SAMPLE"
-done
-sed -i "1s/^/${HEADER}\n/" "$BOW_DIR/HTSeq_Count_union.txt"
-
-# Clean up
-rm "$BOW_DIR/"*_counts.txt "$BOW_DIR/gene_column.txt"
-#
-##### featureCounts ##########
-echo "Running featureCounts..."
-if [[ $MODE == "PE" ]]; then
-    echo "Running in Paired-End mode..."
-    featureCounts -p -g gene_id -T $THREADS -O -M -a "$GTF"/*gtf -o Quantification/Bowtie/FC/FC_Count.txt Mapping/Bowtie/*.bam
+if [ ! -f "$RSEM_INDEX_DIR/rsem_ref.idx.fa" ]; then
+    echo ">>> Building RSEM reference (Bowtie2-based)..."
+    mkdir -p "$RSEM_INDEX_DIR"
+    
+    rsem-prepare-reference \
+        --gtf "$GTF" \
+        --bowtie2 \
+        --num-threads "$THREADS" \
+        "$FASTA" \
+        "$RSEM_INDEX_DIR/rsem_ref"
+    
+    echo "  ✓ RSEM reference created successfully"
 else
-    echo "Running in Single-End mode..."
-    featureCounts -g gene_id -T $THREADS -O -M -a "$GTF"/*gtf -o Quantification/Bowtie/FC/FC_Count.txt Mapping/Bowtie/*.bam
-
+    echo "  ✓ RSEM reference already exists"
 fi
 
-echo "All processing completed."
-
-########### RSEM Quantification ##########
-echo "Running RSEM quantification..."
-echo "Running RSEM quantification..."
-# Create RSEM reference if not present
-# RSEM reference preparation (run once)
-mkdir -p Indices/RSEM/Bowtie
-rsem-prepare-reference --gtf $GTF/*.gtf $FASTA/*.fna Indices/RSEM/Bowtie/rsem_ref --bowtie2
-echo "RSEM reference preparation completed."
-####
-########## RSEM ##########
-echo "Running RSEM quantification..."
-
-mkdir -p Quantification/Bowtie/RSEM
+# ===================================================================
+# STEP 2: BOWTIE2 ALIGNMENT
+# ===================================================================
+echo ""
+echo "=========================================="
+echo "STEP 2: Bowtie2 Alignment"
+echo "=========================================="
 
 if [[ $MODE == "PE" ]]; then
-    echo "Running RSEM in Paired-End mode..."
-    for R1 in "$READ_DIR"/*_R1.fastq; do
+    echo ">>> Running in Paired-End mode..."
+    
+    for R1 in "$TRIM_DIR"/*_R1.fastq; do
+        if [ ! -f "$R1" ]; then
+            continue  # Skip if no files match
+        fi
+        
         SAMPLE=$(basename "$R1" _R1.fastq)
-        R2="$READ_DIR/${SAMPLE}_R2.fastq"
+        R2="$TRIM_DIR/${SAMPLE}_R2.fastq"
+        
+        if [ ! -f "$R2" ]; then
+            echo "WARNING: R2 file not found for $SAMPLE: $R2"
+            continue
+        fi
+        
+        echo ""
+        echo "  Processing sample: $SAMPLE"
+        
+        SAM_FILE="$MAPPING_DIR/${SAMPLE}.sam"
+        BAM_FILE="$MAPPING_DIR/${SAMPLE}.bam"
+        SORTED_BAM="$MAPPING_DIR/${SAMPLE}_sorted.bam"
+        
+        # Run Bowtie2 alignment - FIXED: use --threads instead of -p
+        echo "    - Running Bowtie2 alignment..."
+        bowtie2 --threads "$THREADS" \
+            -x "$INDEX_BASE" \
+            -1 "$R1" \
+            -2 "$R2" \
+            -S "$SAM_FILE" \
+            2> "$MAPPING_DIR/${SAMPLE}.bowtie2.log"
+        
+        if [ ! -f "$SAM_FILE" ]; then
+            echo "ERROR: Bowtie2 failed for $SAMPLE" >&2
+            exit 1
+        fi
+        
+        # Convert SAM to BAM
+        echo "    - Converting SAM to BAM..."
+        samtools view -@ "$THREADS" -b -h "$SAM_FILE" > "$BAM_FILE"
+        rm "$SAM_FILE"
+        
+        # Sort BAM by coordinate
+        echo "    - Sorting BAM file..."
+        samtools sort -@ "$THREADS" -o "$SORTED_BAM" "$BAM_FILE"
+        rm "$BAM_FILE"
+        
+        # Index BAM
+        echo "    - Indexing BAM file..."
+        samtools index -@ "$THREADS" "$SORTED_BAM"
+        
+        echo "    ✓ $SAMPLE completed"
+    done
 
-        echo "Quantifying sample: $SAMPLE"
+else
+    echo ">>> Running in Single-End mode..."
+    
+    for R in "$TRIM_DIR"/*.fastq; do
+        if [ ! -f "$R" ]; then
+            continue  # Skip if no files match
+        fi
+        
+        # Skip paired-end files in SE mode
+        if [[ "$R" == *_R1.fastq || "$R" == *_R2.fastq ]]; then
+            continue
+        fi
+        
+        SAMPLE=$(basename "$R" .fastq)
+        
+        echo ""
+        echo "  Processing sample: $SAMPLE"
+        
+        SAM_FILE="$MAPPING_DIR/${SAMPLE}.sam"
+        BAM_FILE="$MAPPING_DIR/${SAMPLE}.bam"
+        SORTED_BAM="$MAPPING_DIR/${SAMPLE}_sorted.bam"
+        
+        # Run Bowtie2 alignment - FIXED: use --threads instead of -p
+        echo "    - Running Bowtie2 alignment..."
+        bowtie2 --threads "$THREADS" \
+            -x "$INDEX_BASE" \
+            -U "$R" \
+            -S "$SAM_FILE" \
+            2> "$MAPPING_DIR/${SAMPLE}.bowtie2.log"
+        
+        if [ ! -f "$SAM_FILE" ]; then
+            echo "ERROR: Bowtie2 failed for $SAMPLE" >&2
+            exit 1
+        fi
+        
+        # Convert SAM to BAM
+        echo "    - Converting SAM to BAM..."
+        samtools view -@ "$THREADS" -b -h "$SAM_FILE" > "$BAM_FILE"
+        rm "$SAM_FILE"
+        
+        # Sort BAM by coordinate
+        echo "    - Sorting BAM file..."
+        samtools sort -@ "$THREADS" -o "$SORTED_BAM" "$BAM_FILE"
+        rm "$BAM_FILE"
+        
+        # Index BAM
+        echo "    - Indexing BAM file..."
+        samtools index -@ "$THREADS" "$SORTED_BAM"
+        
+        echo "    ✓ $SAMPLE completed"
+    done
+fi
+
+echo ""
+echo "✓ Bowtie2 alignment completed"
+
+# Verify BAM files were created
+BAM_COUNT=$(find "$MAPPING_DIR" -name "*_sorted.bam" -type f | wc -l)
+if [ "$BAM_COUNT" -eq 0 ]; then
+    echo "ERROR: No BAM files were created!" >&2
+    exit 1
+fi
+echo "  Found $BAM_COUNT BAM files"
+
+# ===================================================================
+# STEP 3: FEATURECOUNTS QUANTIFICATION
+# ===================================================================
+echo ""
+echo "=========================================="
+echo "STEP 3: featureCounts Quantification"
+echo "=========================================="
+
+echo ">>> Running featureCounts..."
+
+FC_OUTPUT="$FC_OUTPUT_DIR/FC_Count.txt"
+
+if [[ $MODE == "PE" ]]; then
+    echo "  Mode: Paired-End"
+    featureCounts -p -g gene_id -T "$THREADS" -O -M \
+        -a "$GTF" \
+        -o "$FC_OUTPUT" \
+        "$MAPPING_DIR"/*_sorted.bam
+else
+    echo "  Mode: Single-End"
+    featureCounts -g gene_id -T "$THREADS" -O -M \
+        -a "$GTF" \
+        -o "$FC_OUTPUT" \
+        "$MAPPING_DIR"/*_sorted.bam
+fi
+
+if [ ! -f "$FC_OUTPUT" ]; then
+    echo "ERROR: featureCounts failed" >&2
+    exit 1
+fi
+
+FC_LINES=$(wc -l < "$FC_OUTPUT")
+echo "✓ featureCounts completed ($FC_LINES lines)"
+
+# ===================================================================
+# STEP 4: HTSEQ QUANTIFICATION (OPTIMIZED WITH PIPES)
+# ===================================================================
+echo ""
+echo "=========================================="
+echo "STEP 4: HTSeq Quantification"
+echo "=========================================="
+
+echo ">>> Processing BAM files for HTSeq..."
+
+# Process each BAM file
+for BAM in "$MAPPING_DIR"/*_sorted.bam; do
+    if [ ! -f "$BAM" ]; then
+        continue
+    fi
+    
+    SAMPLE=$(basename "$BAM" _sorted.bam)
+    HTSEQ_OUTPUT="$HTSEQ_OUTPUT_DIR/${SAMPLE}.htseq.txt"
+    
+    echo ""
+    echo "  Sample: $SAMPLE"
+    echo "    - Running HTSeq-count with optimized piping..."
+    
+    # Optimized approach: use pipes instead of creating intermediate files
+    samtools sort -n -u -@ "$THREADS" "$BAM" | \
+    samtools view -h -@ "$THREADS" - | \
+    htseq-count -f sam -r name -m union - "$GTF" \
+        > "$HTSEQ_OUTPUT" 2> "$HTSEQ_OUTPUT_DIR/${SAMPLE}.htseq.err"
+    
+    if [ ! -f "$HTSEQ_OUTPUT" ]; then
+        echo "    ERROR: HTSeq failed for $SAMPLE" >&2
+        exit 1
+    fi
+    
+    echo "    ✓ HTSeq completed for $SAMPLE"
+done
+
+echo ""
+echo ">>> Merging HTSeq results into count matrix..."
+
+# Get list of HTSeq output files
+HTSEQ_FILES=("$HTSEQ_OUTPUT_DIR"/*.htseq.txt)
+
+if [ ${#HTSEQ_FILES[@]} -eq 0 ] || [ ! -f "${HTSEQ_FILES[0]}" ]; then
+    echo "ERROR: No HTSeq output files found" >&2
+    exit 1
+fi
+
+# FIXED: Extract gene IDs (no header in HTSeq files, exclude __ summary lines)
+echo "  - Extracting gene IDs..."
+awk '!/^__/ {print $1}' "${HTSEQ_FILES[0]}" > "$HTSEQ_OUTPUT_DIR/gene_ids.txt"
+
+# Create header dynamically from sample names
+echo "  - Creating header..."
+HEADER="Gene"
+for htseq_file in "${HTSEQ_FILES[@]}"; do
+    SAMPLE=$(basename "$htseq_file" .htseq.txt)
+    HEADER="${HEADER}	${SAMPLE}"
+done
+
+# Extract counts from each file and merge
+echo "  - Extracting sample counts..."
+TEMP_DIR="$HTSEQ_OUTPUT_DIR/temp_merge"
+mkdir -p "$TEMP_DIR"
+
+for htseq_file in "${HTSEQ_FILES[@]}"; do
+    SAMPLE=$(basename "$htseq_file" .htseq.txt)
+    # FIXED: Extract counts (column 2) excluding __ summary lines
+    awk '!/^__/ {print $2}' "$htseq_file" > "$TEMP_DIR/${SAMPLE}_counts.txt"
+done
+
+# Merge all columns
+echo "  - Merging columns..."
+MERGED_FILE="$HTSEQ_OUTPUT_DIR/HTSeq_Count_union.txt"
+
+# Write header
+echo -e "$HEADER" > "$MERGED_FILE"
+
+# Paste gene IDs with all sample counts
+paste "$HTSEQ_OUTPUT_DIR/gene_ids.txt" "$TEMP_DIR"/*_counts.txt >> "$MERGED_FILE"
+
+# Cleanup temporary files
+rm -rf "$TEMP_DIR" "$HTSEQ_OUTPUT_DIR/gene_ids.txt"
+
+HT_LINES=$(wc -l < "$MERGED_FILE")
+echo "✓ HTSeq quantification completed ($HT_LINES lines)"
+
+# ===================================================================
+# STEP 5: RSEM QUANTIFICATION
+# ===================================================================
+echo ""
+echo "=========================================="
+echo "STEP 5: RSEM Quantification"
+echo "=========================================="
+
+echo ">>> Running RSEM quantification..."
+
+if [[ $MODE == "PE" ]]; then
+    echo "  Mode: Paired-End"
+    
+    for R1 in "$TRIM_DIR"/*_R1.fastq; do
+        if [ ! -f "$R1" ]; then
+            continue
+        fi
+        
+        SAMPLE=$(basename "$R1" _R1.fastq)
+        R2="$TRIM_DIR/${SAMPLE}_R2.fastq"
+        
+        if [ ! -f "$R2" ]; then
+            continue
+        fi
+        
+        echo ""
+        echo "  Quantifying sample: $SAMPLE"
+        
         rsem-calculate-expression \
             --paired-end \
             --bowtie2 \
-            --bowtie2-path /usr/bin/ \
             --estimate-rspd \
             --append-names \
-            -p $THREADS \
+            --num-threads "$THREADS" \
             "$R1" "$R2" \
-            Indices/RSEM/Bowtie/rsem_ref \
-            Quantification/Bowtie/RSEM/"$SAMPLE"
+            "$RSEM_INDEX_DIR/rsem_ref" \
+            "$RSEM_OUTPUT_DIR/$SAMPLE" \
+            2> "$RSEM_OUTPUT_DIR/${SAMPLE}.rsem.log"
+        
+        if [ ! -f "$RSEM_OUTPUT_DIR/${SAMPLE}.genes.results" ]; then
+            echo "    ERROR: RSEM failed for $SAMPLE" >&2
+            exit 1
+        fi
+        
+        echo "    ✓ RSEM completed for $SAMPLE"
     done
 
 else
-    echo "Running RSEM in Single-End mode..."
-    for R in "$READ_DIR"/*.fastq; do
+    echo "  Mode: Single-End"
+    
+    for R in "$TRIM_DIR"/*.fastq; do
+        if [ ! -f "$R" ]; then
+            continue
+        fi
+        
+        # Skip paired-end files in SE mode
+        if [[ "$R" == *_R1.fastq || "$R" == *_R2.fastq ]]; then
+            continue
+        fi
+        
         SAMPLE=$(basename "$R" .fastq)
-
-        echo "Quantifying sample: $SAMPLE"
+        
+        echo ""
+        echo "  Quantifying sample: $SAMPLE"
+        
         rsem-calculate-expression \
             --bowtie2 \
-            --bowtie2-path /usr/bin/ \
             --estimate-rspd \
             --append-names \
-            -p $THREADS \
+            --num-threads "$THREADS" \
             "$R" \
-            Indices/RSEM/Bowtie/rsem_ref \
-            Quantification/Bowtie/RSEM/"$SAMPLE"
+            "$RSEM_INDEX_DIR/rsem_ref" \
+            "$RSEM_OUTPUT_DIR/$SAMPLE" \
+            2> "$RSEM_OUTPUT_DIR/${SAMPLE}.rsem.log"
+        
+        if [ ! -f "$RSEM_OUTPUT_DIR/${SAMPLE}.genes.results" ]; then
+            echo "    ERROR: RSEM failed for $SAMPLE" >&2
+            exit 1
+        fi
+        
+        echo "    ✓ RSEM completed for $SAMPLE"
     done
 fi
 
-########
-#!/bin/bash
-# Directory where RSEM results are stored
-RSEM_DIR="Quantification/Bowtie/RSEM"
-OUTPUT="$RSEM_DIR/rsem_gene_counts_matrix.txt"
+echo ""
+echo ">>> Merging RSEM results into count matrix..."
 
-# Get gene_id column from the first file (excluding header)
-FIRST_FILE=$(ls "$RSEM_DIR"/*.genes.results | head -n1)
-cut -f1 "$FIRST_FILE" | tail -n +2 > "$RSEM_DIR/gene_ids.txt"
+# Get gene_id column from first file
+FIRST_FILE=$(ls "$RSEM_OUTPUT_DIR"/*.genes.results | head -n1)
+cut -f1 "$FIRST_FILE" | tail -n +2 > "$RSEM_OUTPUT_DIR/gene_ids.txt"
 
-# Create a temporary directory for counts
-TEMP_DIR="$RSEM_DIR/temp_counts"
+# Create temporary directory for counts
+TEMP_DIR="$RSEM_OUTPUT_DIR/temp_counts"
 mkdir -p "$TEMP_DIR"
 
 # Extract raw counts (5th column) from each file
-for FILE in "$RSEM_DIR"/*.genes.results; do
+for FILE in "$RSEM_OUTPUT_DIR"/*.genes.results; do
     SAMPLE=$(basename "$FILE" .genes.results)
-    echo "Processing $SAMPLE..."
+    echo "  - Processing $SAMPLE..."
     cut -f5 "$FILE" | tail -n +2 > "$TEMP_DIR/${SAMPLE}.txt"
 done
 
 # Merge gene_ids with all sample count files
-paste "$RSEM_DIR/gene_ids.txt" "$TEMP_DIR"/*.txt > "$OUTPUT"
+paste "$RSEM_OUTPUT_DIR/gene_ids.txt" "$TEMP_DIR"/*.txt > "$RSEM_OUTPUT_DIR/rsem_gene_counts_matrix.txt"
 
-# Create header row
+# Prepend header to the final matrix
 HEADER="Geneid"
 for FILE in "$TEMP_DIR"/*.txt; do
     SAMPLE=$(basename "$FILE" .txt)
-    HEADER="$HEADER,$SAMPLE"
+    HEADER="$HEADER	$SAMPLE"
 done
 
-# Prepend header to the final matrix
-(echo "$HEADER"; cat "$OUTPUT") > "$RSEM_DIR/tmpfile" && mv "$RSEM_DIR/tmpfile" "$OUTPUT"
+(echo -e "$HEADER"; cat "$RSEM_OUTPUT_DIR/rsem_gene_counts_matrix.txt") > "$RSEM_OUTPUT_DIR/tmpfile" && \
+mv "$RSEM_OUTPUT_DIR/tmpfile" "$RSEM_OUTPUT_DIR/rsem_gene_counts_matrix.txt"
 
-# Clean up temporary files
-rm -r "$TEMP_DIR" "$RSEM_DIR/gene_ids.txt"
+# Cleanup temporary files
+rm -rf "$TEMP_DIR" "$RSEM_OUTPUT_DIR/gene_ids.txt"
 
-echo "✅ Cleaned RSEM gene count matrix saved to: $OUTPUT"
+RSEM_LINES=$(wc -l < "$RSEM_OUTPUT_DIR/rsem_gene_counts_matrix.txt")
+echo "✓ RSEM quantification completed ($RSEM_LINES lines)"
 
-###
-# Define destination folder
-DEST="DEG"
-mkdir -p "$DEST"
+# ===================================================================
+# FINAL VALIDATION
+# ===================================================================
+echo ""
+echo "=========================================="
+echo "BOWTIE2 PIPELINE COMPLETE"
+echo "=========================================="
 
-echo "Copying Bowtie merged files..."
-cp Quantification/Bowtie/FC/FC_Count.txt "$DEST/B_FC_Count.txt"
-cp Quantification/Bowtie/HT/HTSeq_Count_union.txt "$DEST/B_HTSeq_Count_union.txt"
-cp Quantification/Bowtie/RSEM/rsem_gene_counts_matrix.txt "$DEST/B_rsem_gene_counts_matrix.txt"
-
-
+echo ""
+echo "Output Summary:"
+echo "  ✓ Mapping directory: $MAPPING_DIR"
+echo "    - BAM files: $BAM_COUNT"
+echo "  ✓ featureCounts output: $FC_OUTPUT"
+echo "  ✓ HTSeq output: $MERGED_FILE"
+echo "  ✓ RSEM output: $RSEM_OUTPUT_DIR/rsem_gene_counts_matrix.txt"
+echo ""
+echo "✓ Bowtie2 pipeline completed successfully!"

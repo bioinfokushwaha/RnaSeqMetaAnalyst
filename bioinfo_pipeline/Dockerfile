@@ -22,14 +22,19 @@ RUN micromamba create -y -n rnaseq-cli -f /tmp/environment-cli.yml && \
     micromamba create -y -n rnaseq-r -f /tmp/environment-r.yml && \
     micromamba clean -a -y
 
+# --- (Optional but recommended) Force reinstall stringi to ensure it's compiled correctly against system libraries ---
+RUN micromamba run -n rnaseq-r Rscript -e "install.packages('stringi', type='source', repos='https://cloud.r-project.org')" && \
+    micromamba clean -a -y
 
-# Copy all .sh and .R files from current directory into the image
-COPY *.sh /opt/project/scripts/
-COPY *.R /opt/project/scripts/
+# Create script directory and copy scripts
+RUN mkdir -p /opt/project/scripts
+COPY *.sh *.R /opt/project/scripts/
+
+# Make all scripts executable in one layer
+RUN chmod +x /opt/project/scripts/*.sh 
+RUN chmod +x /opt/project/scripts/*.R
 
 # Set working directory
 WORKDIR /data
 
-# Default command
-CMD ["bash"]
-
+ENTRYPOINT ["/opt/project/scripts/master.sh"]
