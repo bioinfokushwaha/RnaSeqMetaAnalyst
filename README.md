@@ -206,10 +206,10 @@ sample2_2	Treatment
 
 **Example for paired-end reads:**
 ```
-sample_ctrl_1	Control
-sample_ctrl_2	Control
-sample_treat_1	Treatment
-sample_treat_2	Treatment
+sample_1	Control
+sample_2	Control
+sample_1	Treatment
+sample_2	Treatment
 ```
 
 ---
@@ -463,7 +463,7 @@ DEG/
 
 ```bash
 # Navigate to the pipeline directory
-cd /path/to/rnaseq-meta-analyst
+cd /path/to/my_rnaseq_project
 
 # Run the pipeline
 ./run_pipeline.sh \
@@ -538,7 +538,7 @@ cd /path/to/rnaseq-meta-analyst
   --project-dir /home/user/my_rnaseq \
   --mode PE \
   --threads 16 \
-  --index-dir /mnt/shared_indices
+  --index-dir /home/shared_indices
 ```
 
 ### Monitoring Progress
@@ -1001,35 +1001,4 @@ logFC = -2   →  2^-2 = 0.25x (down to quarter)
 
 ---
 
-## Citation and Publication
 
-If you use this pipeline in your research, please cite:
-
-```bibtex
-@software{rnaseq_meta_analyst_2024,
-  title={RNA-Seq Meta-Analyst: Automated Multi-Method Analysis Pipeline},
-  author={Your Team Name},
-  year={2024},
-  url={https://github.com/yourusername/rnaseq-meta-analyst}
-}
-```
-
----
-
-## Support and Contribution
-
-- **Report Bugs:** GitHub Issues
-- **Request Features:** GitHub Discussions
-- **Contribute Code:** Submit Pull Requests
-
----
-
-## License
-
-[Specify your license here - MIT, GPL, etc.]
-
----
-
-**Last Updated:** 2024
-**Version:** 1.0.0
-**Maintained By:** Your Team
