@@ -206,10 +206,11 @@ sample2_2	Treatment
 
 **Example for paired-end reads:**
 ```
-sample_1	Control
-sample_2	Control
-sample_1	Treatment
-sample_2	Treatment
+SampleName	CONDITION
+sample1_1	Control
+sample1_2	Control
+sample2_1	Treatment
+sample2_2	Treatment
 ```
 
 ---
