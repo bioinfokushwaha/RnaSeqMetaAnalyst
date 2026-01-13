@@ -1,1005 +1,767 @@
 # RnaSeqMetaAnalyst
 ![image](https://github.com/user-attachments/assets/3f5cde0a-61b9-4ed2-af77-9ffa789507de)
 
-A bioinformatics pipeline to perfrom Meta-analysis of RNA-Seq data using uniform processing.
-This repository contains a complete, reproducible RNA-Seq analysis pipeline packaged in a Docker container. It automates alignment (HISAT2, STAR, Bowtie2), Quantificatin (featureCount, htseq-count, rsem) and differential gene expression analysis using DESeq2 and edgeR.
+# RNA-Seq Meta-Analyst Pipeline
 
-📦 Features
-🔁 End-to-end automation: fromAlignment to DEG analysis
+A comprehensive, containerized RNA-seq analysis pipeline that performs alignment, quantification, differential expression analysis, and pipeline comparison across multiple tools.
 
-🐳 Dockerized: no dependency issues
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Bioinformatics](https://img.shields.io/badge/bioinformatics-RNA--seq-orange.svg)]()
 
-🧬 Supports HISAT2, STAR, Bowtie2 for alignment
+## 🎯 Overview
 
-📊 Generates Excel summaries for DEG results (edgeR & DESeq2)
+This pipeline provides a complete solution for RNA-seq data analysis, offering:
 
-📁 Output organized in user-friendly structure
+- **Multiple Aligners**: STAR, HISAT2, Bowtie2
+- **Multiple Quantifiers**: featureCounts, HTSeq, RSEM
+- **Multiple DEG Tools**: DESeq2, edgeR
+- **Comprehensive QC**: FastQC, fastp, MultiQC
+- **Pipeline Comparison**: Cross-tool correlation analysis
 
-
-# Requirements
-## Files
-
-## Tools Used
-The following tools and packages were used in this RNA-seq analysis pipeline:
-
-    FastQC – for raw sequence quality control
-
-    Fastp – for trimming and filtering of reads
-
-    MultiQC – for aggregating QC reports
-
-    STAR – for spliced alignment to the genome
-
-    Hisat2 – for efficient alignment of RNA-seq reads
-
-    Bowtie2 – for general sequence alignment
-
-    HTSeq – for counting reads mapped to genes
-
-    FeatureCounts – for efficient read summarization
-
-    RSEM – for transcript quantification
-
-    R Packages:
-
-        DESeq2 – differential expression analysis
-
-        edgeR – differential expression analysis
-
-        dplyr – data manipulation
-
-        openxlsx – Excel output handling
-# RNA-Seq Meta-Analyst Pipeline - Complete Documentation
-
-A comprehensive bioinformatics pipeline for RNA-sequencing analysis with support for multiple alignment tools and quantification methods. This guide is designed for beginners and advanced users alike.
+**Key Features:**
+- 🐳 Fully containerized (Docker)
+- 🔄 Reproducible results across platforms
+- 📊 Generates 16 different pipeline combinations
+- 🎨 Publication-ready visualizations
+- ⚡ Parallel processing for faster execution
+- 📝 Comprehensive logging and error handling
 
 ---
 
-## Table of Contents
+## 📋 Table of Contents
 
-1. [Overview](#overview)
-2. [System Requirements](#system-requirements)
-3. [Installation](#installation)
-4. [Pipeline Structure](#pipeline-structure)
-5. [Detailed Workflow](#detailed-workflow)
-6. [Running the Pipeline](#running-the-pipeline)
-7. [Output Files](#output-files)
-8. [Troubleshooting](#troubleshooting)
-9. [Advanced Usage](#advanced-usage)
-
----
-
-## Overview
-
-### What is RNA-Seq Meta-Analyst?
-
-RNA-Seq Meta-Analyst is an automated containerized pipeline that processes raw RNA-sequencing data from raw FASTQ files to differential gene expression results. It runs multiple alignment and quantification tools in parallel, allowing you to compare different analysis strategies.
-
-### Key Features
-
-- **Multiple Aligners**: HISAT2, Bowtie2, and STAR
-- **Multiple Quantifiers**: featureCounts, HTSeq, and RSEM
-- **Automated Processing**: From quality control to differential expression analysis
-- **Parallel Execution**: Aligners run simultaneously to save time
-- **Comprehensive Output**: DEG lists, volcano plots, PCA analysis, and more
-- **Docker Containerized**: No dependency conflicts, works on any system
-
-### Pipeline Combinations Generated
-
-The pipeline produces results from multiple analysis approaches:
-
-```
-Bowtie2 + featureCounts + edgeR
-Bowtie2 + featureCounts + DESeq2
-Bowtie2 + HTSeq + edgeR
-Bowtie2 + HTSeq + DESeq2
-Bowtie2 + RSEM + edgeR
-Bowtie2 + RSEM + DESeq2
-
-HISAT2 + featureCounts + edgeR
-HISAT2 + featureCounts + DESeq2
-
-STAR + featureCounts + edgeR
-STAR + featureCounts + DESeq2
-STAR + HTSeq + edgeR
-STAR + HTSeq + DESeq2
-STAR + RSEM + edgeR
-STAR + RSEM + DESeq2
-
-Total: 16 analysis combinations
-```
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Directory Structure](#directory-structure)
+- [Pipeline Stages](#pipeline-stages)
+- [Usage](#usage)
+- [Output Files](#output-files)
+- [Advanced Options](#advanced-options)
+- [Troubleshooting](#troubleshooting)
+- [Citation](#citation)
+- [License](#license)
 
 ---
 
-## System Requirements
+## 🔧 Prerequisites
 
-### Minimum Hardware Specifications
+### System Requirements
+- **OS**: Linux, macOS, or Windows (with WSL2)
+- **RAM**: Minimum 16 GB (32 GB recommended)
+- **CPU**: Minimum 8 cores (16+ recommended)
+- **Storage**: 50-100 GB free space (depending on dataset size)
+- **Docker**: Version 20.10 or higher
 
-| Requirement | Minimum | Recommended |
-|---|---|---|
-| CPU Cores | 4 | 16+ |
-| RAM | 16 GB | 64 GB |
-| Disk Space | 500 GB | 1-2 TB |
-| GPU | Not required | Not required |
-
-### Software Prerequisites
-
-- **Docker**: Version 20.10 or newer
-  - [Install Docker](https://docs.docker.com/get-docker/)
-  - Verify installation: `docker --version`
-  
-- **Linux/macOS/Windows (with WSL2)**:
-  - Linux: Native support
-  - macOS: Docker Desktop
-  - Windows: Docker Desktop with WSL2
-
-### Check Docker Installation
-
-```bash
-# Verify Docker is running
-docker ps
-
-# You should see: CONTAINER ID   IMAGE   COMMAND   STATUS
-
-# If Docker daemon is not running, start it:
-# macOS: Applications > Docker > Open
-# Linux: sudo systemctl start docker
-```
+### Software Dependencies
+All dependencies are included in the Docker container:
+- Python 3.11
+- R 4.2.3
+- Bioconda packages (STAR, HISAT2, Bowtie2, etc.)
 
 ---
 
-## Installation
+## 📥 Installation
 
 ### Step 1: Clone the Repository
-
 ```bash
-git clone https://github.com/bioinfokushwaha/RnaSeqMetaAnalyst/tree/main/bioinfo_pipeline
-cd rnaseq-meta-analyst
+git clone https://github.com/bioinfokushwaha/RnaSeqMetaAnalyst.git
+cd RnaSeqMetaAnalyst/bioinfo_pipeline
 ```
 
 ### Step 2: Build the Docker Image
+This process builds the Docker image with all necessary environments and tools. It may take 20-40 minutes.
+```bash
+docker build -t rnaseqmetaanalyst:latest .
+```
+
+
+
+### 3. Verify Installation
 
 ```bash
-# Build the container (this takes 10-30 minutes)
-docker build -t rnaseqmetaanalyst:latest .
-
-# Check if the build was successful
-docker images | grep rnaseqmetaanalyst
+docker run --rm rnaseqmetaanalyst:latest --help
 ```
 
-### Step 3: Prepare Your Data Structure
+---
 
-Create a project directory with the following structure:
+## 🚀 Quick Start
+
+### Prepare Your Data
+
+1. **Create project directory structure:**
+
+```bash
+mkdir -p my_project/data/raw
+mkdir -p my_project/data/genome
+```
+
+2. **Add your files:**
 
 ```
-my_rnaseq_project/
+my_project/
 ├── data/
-│   ├── raw/                          # Your raw FASTQ files
+│   ├── raw/                      # FASTQ files
 │   │   ├── sample1_1.fastq.gz
 │   │   ├── sample1_2.fastq.gz
 │   │   ├── sample2_1.fastq.gz
-│   │   ├── sample2_2.fastq.gz
+│   │   └── sample2_2.fastq.gz
+│   ├── genome/                   # Reference genome
+│   │   ├── genome.fna            # Genome FASTA
+│   │   ├── annotation.gtf        # Gene annotation
+│   │   └── annotation.gff        # Gene annotation
+│   └── sampleinfo.txt            # Sample metadata
+└── results/                      # Will be created by pipeline
+```
+
+3. **Create sampleinfo.txt:**
+
+```tsv
+Sample	Condition
+sample1	control
+sample2	control
+sample3	treated
+sample4	treated
+```
+
+**Important**: Use **tab-separated** values (TSV format), not spaces.
+
+### Run the Pipeline
+
+```bash
+cd my_project
+bash /path/to/run_pipeline.sh --project-dir $(pwd) --mode PE
+```
+**For better understanding of paremeters go through 'run_pipeline.sh' where you add multiple parameters**
+**That's it!** The pipeline will:
+1. Perform quality control
+2. Align reads with 3 different aligners
+3. Quantify expression with 3 different methods
+4. Perform differential expression analysis
+5. Generate comparison reports
+
+---
+
+## 📁 Directory Structure
+
+### Input Structure
+
+```
+project/
+├── data/
+│   ├── raw/                          # Raw FASTQ files
+│   │   ├── sample1_1.fastq.gz       # R1 for paired-end
+│   │   ├── sample1_2.fastq.gz       # R2 for paired-end
 │   │   └── ...
 │   ├── genome/                       # Reference genome files
-│   │   ├── genomic.fasta
-│   │   ├── genomic.gtf
-│   │   └── genomic.gff
-│   └── sampleinfo.txt                # Sample metadata (see format below)
-└── results/                          # Output directory (created automatically)
+│   │   ├── *.fna|*.fa|*.fasta       # Genome sequence
+│   │   ├── *.gtf                     # Gene annotation (GTF)
+│   │   └── *.gff|*.gff3             # Gene annotation (GFF)
+│   └── sampleinfo.txt                # Sample metadata (TSV)
+└── results/                          # Output directory (created)
 ```
 
-### Step 4: Create Sample Information File
-
-Create `data/sampleinfo.txt` with the following format:
+### Output Structure
 
 ```
-SampleName	CONDITION
-sample1_1	Control
-sample1_2	Control
-sample2_1	Treatment
-sample2_2	Treatment
-```
-
-**Column Definitions:**
-- **SampleName**: Must match your FASTQ filename (without extensions)
-- **CONDITION**: The experimental condition/group (e.g., Control, Treatment, Disease)
-
-**Example for paired-end reads:**
-```
-SampleName	CONDITION
-sample1_1	Control
-sample1_2	Control
-sample2_1	Treatment
-sample2_2	Treatment
-```
-
----
-
-## Pipeline Structure
-
-### Directory Organization
-
-```
-Pipeline Components:
-├── Quality Control (QC)
-│   ├── FastQC (raw reads)
-│   ├── FastQC (trimmed reads)
-│   ├── fastp (trimming)
-│   └── MultiQC (summary)
-│
-├── Alignment (Parallel)
-│   ├── HISAT2
-│   │   ├── Index building
-│   │   └── Alignment → BAM files
-│   ├── Bowtie2
-│   │   ├── Index building
-│   │   └── Alignment → BAM files
-│   └── STAR
-│       ├── Index building
-│       └── Alignment → BAM files
-│
-├── Quantification
-│   ├── featureCounts
-│   ├── HTSeq
-│   └── RSEM (Bowtie2 & STAR only)
-│
-└── Differential Expression (DEG)
-    ├── edgeR analysis
-    ├── DESeq2 analysis
-    ├── Volcano plots
-    ├── PCA analysis
-    └── Gene lists (UP/DOWN regulated)
-```
-
-### Tools Explained
-
-#### Alignment Tools
-
-**HISAT2** (Hierarchical Indexing for Spliced Alignment of Transcripts)
-- Fast, memory-efficient genome aligner
-- Best for: Mammalian genomes
-- Does NOT support RSEM quantification
-- Output: SAM/BAM files
-
-**Bowtie2**
-- General-purpose short-read aligner
-- Balanced accuracy and speed
-- Supports RSEM quantification
-- Output: SAM/BAM files
-
-**STAR** (Splicing Transcription Alignment from RNA-seq)
-- Specialized for RNA-seq with accurate splice junction detection
-- Best for: Accurate splice site detection
-- Supports RSEM quantification
-- Output: BAM files
-
-#### Quantification Tools
-
-**featureCounts**
-- Fast read counting at exon/gene level
-- Counts reads overlapping gene features
-- Output: Raw gene counts
-
-**HTSeq**
-- Rigorous gene quantification with strict mode
-- Uses "union" mode: handles ambiguous reads carefully
-- Output: Gene counts
-
-**RSEM** (RNA-Seq by Expectation-Maximization)
-- Estimates isoform-level and gene-level expression
-- Handles ambiguous reads probabilistically
-- Produces: Expected counts, normalized values
-- Only compatible with: Bowtie2, STAR
-
-#### Differential Expression Tools
-
-**edgeR**
-- Uses negative binomial distribution
-- Good for: Smaller sample sizes
-- Produces: Fold change, p-values, FDR
-
-**DESeq2**
-- Uses Bayesian approach for normalization
-- Good for: General RNA-seq analysis
-- Produces: Fold change, p-values, FDR
-- Note: Requires integer counts (RSEM counts are auto-converted)
-
----
-
-## Detailed Workflow
-
-### Step 1: Quality Control (QC)
-
-**What happens:**
-- FastQC analyzes raw FASTQ files for quality metrics
-- fastp trims low-quality reads and adapters
-- FastQC re-analyzes trimmed reads
-- MultiQC creates a comprehensive summary report
-
-**Key metrics to check:**
-- Per-base quality scores (should be >30)
-- GC content distribution
-- Adapter contamination (should be <5%)
-- Read length distribution
-
-**Output files:**
-```
-qc/
-├── fastqc_raw/          # Initial quality reports
-├── fastqc_clean/        # Quality after trimming
-├── fastp_reports/       # Trimming statistics
-└── multiqc/             # Summary report
-    └── multiqc_report.html  # View in browser
-```
-
-### Step 2: Alignment (Parallel Processing)
-
-**What happens:**
-
-1. **Index Building** (runs once, cached for reuse)
-   - Creates searchable genome index for each aligner
-   - Time: 1-30 minutes (depends on genome size)
-   
-2. **Read Alignment** (parallel across tools)
-   - Maps each trimmed read to the genome
-   - Generates alignment files (SAM format)
-   
-3. **SAM to BAM Conversion**
-   - Compresses alignments to binary format
-   - Sorts by genomic coordinate
-   - Creates index files for fast access
-
-**Alignment statistics:**
-- % of reads successfully aligned
-- Uniquely mapped reads
-- Multi-mapped reads
-- Unmapped reads
-
-**Output files:**
-```
-Mapping/
-├── Bowtie/
-│   └── *_sorted.bam          # Coordinate-sorted alignments
-├── Hisat2/
-│   └── *_sorted.bam
-└── STAR/
-    └── *_sorted.bam
-```
-
-### Step 3: Quantification
-
-**What happens:**
-
-1. **featureCounts** (gene-level counting)
-   - Counts reads overlapping known genes
-   - Handles paired-end reads and strand information
-   
-2. **HTSeq** (alternative gene-level counting)
-   - Uses union mode for ambiguous reads
-   - Provides comparison to featureCounts
-   
-3. **RSEM** (probabilistic quantification)
-   - Estimates isoform-level expression
-   - Aggregates to gene-level
-   - Handles multi-mapped reads probabilistically
-
-**Output files:**
-```
-Quantification/
-├── Bowtie/
-│   ├── FC/          # featureCounts output
-│   ├── HT/          # HTSeq output
-│   └── RSEM/        # RSEM output
-├── Hisat2/
-│   ├── FC/
-│   └── HT/          # Note: No RSEM for HISAT2
-└── STAR/
-    ├── FC/
-    ├── HT/
-    └── RSEM/
-```
-
-### Step 4: Data Cleaning
-
-**What happens:**
-
-The pipeline cleans count matrices:
-- Removes batch metadata (sample names standardized)
-- Removes file extensions (.bam, .fastq, etc.)
-- Converts to CSV format
-- RSEM: Maintains decimal values (DESeq2 automatically handles conversion)
-- Validates: Ensures all expected samples present
-
-**Output files:**
-```
-DEG/
-├── *_FC_counts_clean.txt       # featureCounts cleaned
-├── *_HTSeq_counts_clean.txt    # HTSeq cleaned
-├── *_RSEM_counts_clean.txt     # RSEM cleaned
-└── sampleinfo.txt              # Sample metadata
-```
-
-### Step 5: Differential Expression Analysis
-
-**edgeR Analysis:**
-1. Filters low-count genes
-2. Calculates normalization factors
-3. Estimates gene-wise dispersion
-4. Performs statistical testing (GLM-based)
-5. Generates volcano plots
-
-**DESeq2 Analysis:**
-1. Filters low-count genes
-2. Estimates size factors (normalization)
-3. Estimates gene-wise dispersion
-4. Performs statistical testing (Wald test)
-5. Generates volcano plots
-
-**For each tool:**
-- PCA plot (shows sample clustering)
-- Normalized count matrix
-- Housekeeping genes analysis (if available)
-- Volcano plots (high resolution: 3400×3400 @ 600 DPI)
-- DEG lists filtered for non-zero expression
-
-**Output files:**
-```
-DEG/
-└── [tool_name]_[quantifier]/
-    ├── [name]_Normalized_Counts.xlsx
-    ├── [name]_PCA_Scores.xlsx
-    ├── [name]_PCA_Plot.png
-    ├── [name]_HKG_NonZero_Normalized.xlsx
-    ├── [name]_[Condition1]_vs_[Condition2]_UP.xlsx
-    ├── [name]_[Condition1]_vs_[Condition2]_DOWN.xlsx
-    ├── [name]_[Condition1]_vs_[Condition2]_Volcano.png
-    └── [name]_DEG_Summary.xlsx
-```
-
----
-
-## Running the Pipeline
-
-### Quick Start (5 minutes)
-
-```bash
-# Navigate to the pipeline directory
-cd /path/to/my_rnaseq_project
-
-# Run the pipeline
-./run_pipeline.sh \
-  --project-dir /path/to/my_rnaseq_project \
-  --mode PE \
-  --threads 16
-```
-
-### Detailed Command Reference
-
-```bash
-./run_pipeline.sh [OPTIONS]
-```
-
-#### Required Arguments
-
-```bash
---project-dir <path>    # Absolute path to your project directory
---mode <SE|PE>          # SE = Single-End, PE = Paired-End reads
-```
-
-#### Optional Arguments
-
-```bash
---reads-dir <path>      # Raw FASTQ directory
-                        # Default: <project-dir>/data/raw
-
---genome-dir <path>     # Genome files (FASTA, GTF, GFF)
-                        # Default: <project-dir>/data/genome
-
---sample-info <path>    # Sample metadata file
-                        # Default: <project-dir>/data/sampleinfo.txt
-
---output-dir <path>     # Results directory
-                        # Default: <project-dir>/results
-
---threads <int>         # CPU threads to use (default: 8)
-                        # Recommended: Total cores on your system
-
---index-dir <path>      # Pre-built indices (optional)
-
---image-name <name>     # Docker image name
-                        # Default: rnaseqmetaanalyst:latest
-
---help                  # Show help message
-```
-
-#### Example Commands
-
-**Single-End, 8 threads:**
-```bash
-./run_pipeline.sh \
-  --project-dir /home/user/my_rnaseq \
-  --mode SE \
-  --threads 8
-```
-
-**Paired-End, 32 threads, custom paths:**
-```bash
-./run_pipeline.sh \
-  --project-dir /home/user/my_rnaseq \
-  --mode PE \
-  --threads 32 \
-  --reads-dir /mnt/data/fastq \
-  --genome-dir /mnt/reference/genome \
-  --output-dir /mnt/results/my_analysis
-```
-
-**With pre-built indices:**
-```bash
-./run_pipeline.sh \
-  --project-dir /home/user/my_rnaseq \
-  --mode PE \
-  --threads 16 \
-  --index-dir /home/shared_indices
-```
-
-### Monitoring Progress
-
-```bash
-# Watch the container in real-time (shows logs)
-docker logs -f <CONTAINER_ID>
-
-# Get the container ID if you forgot it
-docker ps -a | grep rnaseqmetaanalyst
-
-# Check file creation progress
-ls -lh /path/to/results/DEG/
-```
-
-### Estimated Runtime
-
-| Phase | Time | Notes |
-|---|---|---|
-| QC + Trimming | 30 min - 2 hrs | Depends on read count |
-| Index Building | 30 min - 2 hrs | First run only, then cached |
-| Alignment | 1-4 hrs | Parallel (3 aligners simultaneously) |
-| Quantification | 30 min - 2 hrs | Depends on alignment size |
-| DEG Analysis | 5-15 min | Per combination, usually fast |
-| **Total** | **3-12 hours** | Single sample, typical hardware |
-
----
-
-## Output Files
-
-### Project Results Structure
-
-```
-my_rnaseq_project/results/
-├── qc/
-│   ├── fastqc_raw/
-│   │   ├── sample1_1_fastqc.html       # View in browser
-│   │   ├── sample1_2_fastqc.html
-│   │   └── ...
-│   ├── fastqc_clean/
-│   │   ├── sample1_R1_fastqc.html
-│   │   ├── sample1_R2_fastqc.html
-│   │   └── ...
-│   ├── fastp_reports/
-│   │   ├── sample1_fastp.html
-│   │   ├── sample1_fastp.json
-│   │   └── ...
-│   └── multiqc/
-│       └── multiqc_report.html         # Master QC report
-│
-├── Trim/                               # Cleaned FASTQ files
-│   └── *.fastq (uncompressed)
-│
-├── Mapping/
+results/
+├── qc/                               # Quality control reports
+│   ├── fastqc_raw/                  # FastQC before trimming
+│   ├── fastqc_clean/                # FastQC after trimming
+│   ├── fastp_reports/               # fastp HTML reports
+│   └── multiqc/                     # MultiQC summary
+├── Trim/                            # Trimmed FASTQ files
+├── Mapping/                         # Alignment outputs
+│   ├── Bowtie/                      # Bowtie2 BAM files
+│   ├── Hisat2/                      # HISAT2 BAM files
+│   └── STAR/                        # STAR BAM files
+├── Quantification/                  # Count matrices
 │   ├── Bowtie/
-│   │   └── *_sorted.bam               # BAM files
+│   │   ├── FC/                      # featureCounts
+│   │   ├── HT/                      # HTSeq
+│   │   └── RSEM/                    # RSEM
 │   ├── Hisat2/
-│   │   └── *_sorted.bam
+│   │   ├── FC/
+│   │   └── HT/
 │   └── STAR/
-│       └── *_sorted.bam
-│
-├── Quantification/
-│   ├── Bowtie/
-│   │   ├── FC/FC_Count.txt            # Gene counts
-│   │   ├── HT/HTSeq_Count_union.txt
-│   │   └── RSEM/*.genes.results       # RSEM outputs
-│   ├── Hisat2/
-│   │   └── ... (no RSEM)
-│   └── STAR/
-│       └── ... (includes RSEM)
-│
-├── DEG/                                # MAIN RESULTS FOLDER
-│   ├── B_FC_counts_clean.txt           # Cleaned count matrices
-│   ├── B_HTSeq_counts_clean.txt
-│   ├── B_RSEM_counts_clean.txt
-│   ├── H_FC_counts_clean.txt
-│   ├── S_FC_counts_clean.txt
-│   ├── S_HTSeq_counts_clean.txt
-│   ├── S_RSEM_counts_clean.txt
-│   │
-│   ├── B_FC_counts_clean/              # DEG results by method
-│   │   ├── B_FC_counts_clean_DESeq2_Normalized_Counts.xlsx
-│   │   ├── B_FC_counts_clean_DESeq2_Control_vs_Treatment_UP.xlsx
-│   │   ├── B_FC_counts_clean_DESeq2_Control_vs_Treatment_DOWN.xlsx
-│   │   ├── B_FC_counts_clean_DESeq2_Control_vs_Treatment_Volcano.png
-│   │   └── ...
-│   ├── B_HTSeq_counts_clean/
-│   ├── B_RSEM_counts_clean/
-│   └── ... (directories for each analysis combination)
-│
-├── Indices/                            # Built genome indices (cached)
-│   ├── Bowtie/genome/*.bt2
-│   ├── Hisat2/genome/*.ht2
-│   └── STAR/genome/
-│
-└── logs/
-    ├── hisat2_TIMESTAMP.log            # Detailed logs per tool
-    ├── bowtie_TIMESTAMP.log
-    ├── star_TIMESTAMP.log
-    ├── edgeR_TIMESTAMP.log
-    ├── deseq2_TIMESTAMP.log
-    └── pipeline_run.log                # Master log
+│       ├── FC/
+│       ├── HT/
+│       └── RSEM/
+├── DEG/                             # Clean count matrices
+│   ├── *_clean.txt                  # Cleaned matrices
+│   └── sampleinfo.txt               # Sample metadata copy
+├── results/
+│   ├── DEG/                         # Differential expression results
+│   │   ├── B_FC_counts_clean/       # Bowtie2 + FC results
+│   │   │   ├── *_edgeR_UP.xlsx
+│   │   │   ├── *_edgeR_DOWN.xlsx
+│   │   │   ├── *_DESeq2_UP.xlsx
+│   │   │   ├── *_DESeq2_DOWN.xlsx
+│   │   │   ├── *_PCA_Plot.png
+│   │   │   └── *_Volcano.png
+│   │   └── ... (16 combinations total)
+│   └── pipeline_comparison/         # Cross-pipeline analysis
+│       ├── upregulated_genes_heatmap.png
+│       ├── downregulated_genes_heatmap.png
+│       ├── *_correlation.png
+│       └── *.xlsx
+└── logs/                            # Execution logs
 ```
-
-### Key Output Files Explained
-
-#### Count Matrices (in DEG/)
-These are your primary quantification results:
-
-```
-S_FC_counts_clean.txt        # STAR + featureCounts
-```
-
-Format:
-```
-Geneid,Sample1,Sample2,Sample3,Sample4
-ENSG00000000003,100,120,50,60
-ENSG00000000005,0,0,5,10
-ENSG00000000419,5000,4800,3000,3200
-...
-```
-
-#### Differential Expression Results
-
-**UP genes** (upregulated in first condition):
-```
-B_FC_counts_clean_edgeR_Control_vs_Treatment_UP.xlsx
-```
-
-Columns:
-- `Trans`: Gene ID
-- `logFC`: Log2 fold change
-- `logCPM`: Log2 counts per million
-- `LR`: Likelihood ratio
-- `PValue`: P-value
-- `FDR`: Adjusted p-value (false discovery rate)
-- `NormalizedCount_Mean`: Average normalized expression
-
-#### Visualization Files
-
-**Volcano Plot** (PNG image):
-```
-B_FC_counts_clean_edgeR_Control_vs_Treatment_Volcano.png
-```
-
-Shows:
-- X-axis: Log2 fold change (left=downregulated, right=upregulated)
-- Y-axis: -log10(FDR) (higher=more significant)
-- Red points: Significant DEGs (FDR < 0.05, |FC| > 1)
-- Blue points: Non-significant genes
-
-**PCA Plot** (PNG image):
-```
-B_FC_counts_clean_edgeR_PCA_Plot.png
-```
-
-Shows:
-- Sample clustering by principal components
-- Color-coded by experimental condition
-- Helps identify batch effects
 
 ---
 
-## Troubleshooting
+## 🔬 Pipeline Stages
+
+### Stage 1: Quality Control & Alignment
+
+```mermaid
+graph LR
+    A[Raw FASTQ] --> B[FastQC]
+    A --> C[fastp Trimming]
+    C --> D[FastQC]
+    C --> E[STAR Alignment]
+    C --> F[HISAT2 Alignment]
+    C --> G[Bowtie2 Alignment]
+    E --> H[featureCounts]
+    E --> I[HTSeq]
+    E --> J[RSEM]
+```
+
+**Tools Used:**
+- **QC**: FastQC, fastp, MultiQC
+- **Aligners**: STAR, HISAT2, Bowtie2
+- **Quantifiers**: featureCounts, HTSeq, RSEM
+
+**Combinations Generated**: 8 count matrices
+- Bowtie2 + featureCounts
+- Bowtie2 + HTSeq
+- Bowtie2 + RSEM
+- HISAT2 + featureCounts
+- HISAT2 + HTSeq
+- STAR + featureCounts
+- STAR + HTSeq
+- STAR + RSEM
+
+### Stage 2: Differential Expression Analysis
+
+**Tools Used:**
+- DESeq2 (variance-stabilizing transformation)
+- edgeR (trimmed mean of M-values normalization)
+
+**For Each Count Matrix:**
+- Normalized counts
+- PCA plots
+- Volcano plots
+- UP-regulated genes (Excel)
+- DOWN-regulated genes (Excel)
+- Summary statistics
+
+**Total Combinations**: 16 (8 matrices × 2 DEG tools)
+
+### Stage 3: Pipeline Comparison
+
+**Analyses:**
+1. **Non-zero gene counts** across samples
+2. **UP-regulated genes** overlap matrix
+3. **DOWN-regulated genes** overlap matrix
+4. **Correlation heatmaps** between pipelines
+5. **Summary statistics** and reports
+
+---
+
+## 💻 Usage
+
+### Basic Usage
+
+```bash
+./run_pipeline.sh --project-dir <path> --mode <SE|PE>
+```
+
+### Common Commands
+
+#### Full Pipeline (Paired-End)
+```bash
+./run_pipeline.sh --project-dir $(pwd) --mode PE
+```
+
+#### Full Pipeline (Single-End)
+```bash
+./run_pipeline.sh --project-dir $(pwd) --mode SE
+```
+
+#### Run Only DEG Analysis
+```bash
+./run_pipeline.sh --project-dir $(pwd) --mode PE --deg-only
+```
+
+#### Run Only Comparison
+```bash
+./run_pipeline.sh --project-dir $(pwd) --mode PE --comparison-only
+```
+
+#### Custom DEG Thresholds
+```bash
+./run_pipeline.sh \
+  --project-dir $(pwd) \
+  --mode PE \
+  --log2fc 1.5 \
+  --fdr 0.01 \
+  --pvalue 0.01
+```
+
+#### Skip Specific Stages
+```bash
+# Skip comparison analysis
+./run_pipeline.sh --project-dir $(pwd) --mode PE --skip-comparison
+
+# Skip DEG analysis
+./run_pipeline.sh --project-dir $(pwd) --mode PE --skip-deg
+
+# Skip alignment (requires existing count matrices)
+./run_pipeline.sh --project-dir $(pwd) --mode PE --skip-alignment
+```
+
+### Options Reference
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--project-dir` | Project directory path (required) | - |
+| `--mode` | Sequencing mode: SE or PE (required) | - |
+| `--threads` | Number of CPU threads | 8 |
+| `--log2fc` | Log2 fold change threshold | 0 |
+| `--fdr` | False discovery rate threshold | 0.05 |
+| `--pvalue` | P-value threshold | 0.05 |
+| `--sjdb-overhang` | STAR parameter (read length - 1) | 100 |
+| `--skip-alignment` | Skip alignment stage | false |
+| `--skip-deg` | Skip DEG analysis | false |
+| `--skip-comparison` | Skip comparison stage | false |
+| `--deg-only` | Only run DEG analysis | false |
+| `--comparison-only` | Only run comparison | false |
+| `--detached` | Run in background | false |
+| `--index-dir` | Pre-built indices directory | - |
+
+---
+
+## 📊 Output Files
+
+### Quality Control
+
+- `multiqc_report.html` - Comprehensive QC summary
+- `fastp_reports/*.html` - Per-sample QC reports
+- `fastqc_raw/` - Pre-trimming QC
+- `fastqc_clean/` - Post-trimming QC
+
+### Alignment
+
+- `*_sorted.bam` - Sorted BAM files
+- `*_sorted.bam.bai` - BAM index files
+- `*.log` - Alignment statistics
+
+### Count Matrices
+
+- `*_counts_clean.txt` - Cleaned count matrices (CSV format)
+- One file per aligner-quantifier combination
+
+### DEG Results
+
+**Per Pipeline Combination:**
+- `*_UP.xlsx` - Upregulated genes
+- `*_DOWN.xlsx` - Downregulated genes
+- `*_Normalized.xlsx` - Normalized counts
+- `*_PCA_Plot.png` - Principal component analysis
+- `*_PCA_Scores.xlsx` - PCA coordinates
+- `*_Volcano.png` - Volcano plot
+- `*_DEG_Summary.xlsx` - Summary statistics
+
+**Columns in DEG Files:**
+- Gene ID
+- Log2 fold change
+- P-value
+- Adjusted p-value (FDR)
+- Base mean / CPM
+- Status (UP/DOWN/NS)
+
+### Comparison Analysis
+
+- `upregulated_genes_comparison_matrix.xlsx` - UP gene overlaps
+- `downregulated_genes_comparison_matrix.xlsx` - DOWN gene overlaps
+- `upregulated_genes_heatmap.png` - UP genes heatmap
+- `downregulated_genes_heatmap.png` - DOWN genes heatmap
+- `*_correlation.png` - Correlation heatmaps
+- `nonzero_gene_counts_by_sample.xlsx` - Gene detection rates
+- `analysis_summary.txt` - Summary report
+
+---
+
+## 🔬 Advanced Options
+
+### Using Pre-built Indices
+
+If you have pre-built genome indices, you can skip the indexing step:
+
+```bash
+./run_pipeline.sh \
+  --project-dir $(pwd) \
+  --mode PE \
+  --index-dir /path/to/indices
+```
+
+**Expected index structure:**
+```
+indices/
+├── Bowtie/
+│   └── genome.*
+├── Hisat2/
+│   └── genome.*
+├── STAR/
+│   └── genome/
+└── RSEM/
+    ├── Bowtie/
+    │   └── rsem_ref.*
+    └── STAR/
+        └── rsem_ref.*
+```
+
+### Running in Background
+
+For long-running analyses:
+
+```bash
+./run_pipeline.sh \
+  --project-dir $(pwd) \
+  --mode PE \
+  --detached
+```
+
+Monitor progress:
+```bash
+# View container logs
+docker logs -f <container_id>
+
+# Or view log file
+tail -f results/pipeline_run.log
+```
+
+### Custom Resource Allocation
+
+```bash
+# Use 16 threads
+./run_pipeline.sh --project-dir $(pwd) --mode PE --threads 16
+
+# With memory limit (via Docker)
+docker run --cpus=16 --memory=32g ...
+```
+
+### Pipeline Codes
+
+Each pipeline combination is assigned a 3-letter code:
+
+**Format**: `[Aligner][Quantifier][DEG Tool]`
+
+**Aligners:**
+- `B` = Bowtie2
+- `H` = HISAT2
+- `S` = STAR
+
+**Quantifiers:**
+- `F` = featureCounts
+- `H` = HTSeq
+- `R` = RSEM
+
+**DEG Tools:**
+- `E` = edgeR
+- `D` = DESeq2
+
+**Examples:**
+- `BFE` = Bowtie2 + featureCounts + edgeR
+- `SRD` = STAR + RSEM + DESeq2
+- `HHE` = HISAT2 + HTSeq + edgeR
+
+---
+
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-#### 1. "ERROR: docker command could not be found"
+#### 1. Docker Permission Denied
 
-**Problem:** Docker is not installed or not in PATH.
-
-**Solution:**
-```bash
-# Check if Docker is installed
-which docker
-
-# If not found, install Docker:
-# macOS: https://docs.docker.com/desktop/install/mac-install/
-# Linux: sudo apt-get install docker.io
-# Windows: https://docs.docker.com/desktop/install/windows-install/
-
-# Verify installation
-docker --version  # Should show version
-docker ps        # Should connect to daemon
+**Error:**
+```
+Got permission denied while trying to connect to the Docker daemon socket
 ```
 
-#### 2. "ERROR: Reads directory not found"
+**Solution:**
+```bash
+# Add user to docker group
+sudo usermod -aG docker $USER
 
-**Problem:** FASTQ files are in wrong location.
+# Log out and back in, or run:
+newgrp docker
+```
+
+#### 2. Out of Memory
+
+**Error:**
+```
+Container killed due to memory limit
+```
 
 **Solution:**
 ```bash
-# Check your directory structure
-ls -la /path/to/my_rnaseq_project/data/raw/
+# Increase Docker memory limit
+# For Docker Desktop: Settings → Resources → Memory
 
-# You should see files like:
-# sample1_1.fastq.gz
-# sample1_2.fastq.gz
+# Or reduce thread count
+./run_pipeline.sh --project-dir $(pwd) --mode PE --threads 4
+```
 
-# If not, correct the --reads-dir path:
+#### 3. Missing sampleinfo.txt
+
+**Error:**
+```
+ERROR: sampleinfo.txt not found
+```
+
+**Solution:**
+- Ensure file exists at `data/sampleinfo.txt`
+- Check format (tab-separated, not space-separated)
+- Verify file permissions
+
+#### 4. No DEG Results
+
+**Issue:** DEG analysis completes but no results files
+
+**Possible causes:**
+- No genes pass thresholds
+- Sample size too small
+- Low sequencing depth
+
+**Solution:**
+```bash
+# Try more lenient thresholds
 ./run_pipeline.sh \
-  --project-dir /path/to/my_rnaseq_project \
-  --reads-dir /correct/path/to/fastq \
-  --mode PE
+  --project-dir $(pwd) \
+  --mode PE \
+  --log2fc 0 \
+  --fdr 0.1
 ```
 
-#### 3. "ERROR: No matching samples found"
+#### 5. Alignment Fails
 
-**Problem:** Sample names in FASTQ don't match sampleinfo.txt.
-
-**Solution:**
+**Check logs:**
 ```bash
-# Check FASTQ filenames
-ls data/raw/ | head -5
-
-# Check sampleinfo.txt
-cat data/sampleinfo.txt
-
-# Example - if your files are:
-# sample1_1.fastq.gz
-# sample1_2.fastq.gz
-
-# Your sampleinfo.txt should have:
-# SampleName     CONDITION
-# sample1        Control
-
-# NOT "sample1_1" or "sample1_1.fastq.gz"
+cat results/logs/star_*.log
+cat results/logs/hisat2_*.log
+cat results/logs/bowtie_*.log
 ```
 
-#### 4. "ERROR: gtf file not found"
-
-**Problem:** Genome files missing or in wrong location.
-
-**Solution:**
-```bash
-# Check genome directory
-ls -la data/genome/
-
-# You need:
-# - genomic.fasta (or .fa)
-# - genomic.gtf
-# - genomic.gff
-
-# If files have different names, edit run_pipeline.sh:
-# Find these lines:
-GTF="/data/genome/genomic.gtf"
-FASTA="/data/genome/GCF_002263795.2_ARS-UCD1.3_genomic.fna"
-GFF="/data/genome/genomic.gff"
-
-# Update with your filenames
-```
-
-#### 5. Container runs but stops with no output
-
-**Problem:** Container ran but produced no results.
-
-**Solution:**
-```bash
-# Check container logs
-docker logs <CONTAINER_ID>
-
-# Look for specific error messages
-# Common causes:
-# - Insufficient disk space: df -h
-# - Out of memory: top
-# - Permission issues: chmod 777 data/
-
-# Re-run with more verbose output:
-./run_pipeline.sh ... 2>&1 | tee pipeline.log
-```
-
-#### 6. "No DEG result files were generated"
-
-**Problem:** edgeR/DESeq2 analysis failed silently.
-
-**Solution:**
-```bash
-# Check sample info format
-cat data/sampleinfo.txt
-
-# Ensure:
-# - No extra spaces
-# - Condition names match across samples
-# - At least 2 samples per condition
-
-# Example CORRECT format:
-# SampleName     CONDITION
-# sample1        ControlGroup
-# sample2        ControlGroup
-# sample3        TreatmentGroup
-
-# Example INCORRECT format (SPACES):
-# SampleName     CONDITION
-# sample1 _R1    ControlGroup    # Extra underscore
-# sample2_R2     ControlGroup    # Inconsistent naming
-```
+**Common causes:**
+- Insufficient memory
+- Corrupted FASTQ files
+- Incorrect genome files
 
 ### Getting Help
 
-1. **Check the logs:**
-   ```bash
-   tail -f /path/to/results/logs/pipeline_run.log
-   ```
-
-2. **Check per-tool logs:**
-   ```bash
-   cat /path/to/results/logs/hisat2_*.log
-   cat /path/to/results/logs/bowtie_*.log
-   cat /path/to/results/logs/deseq2_*.log
-   ```
-
-3. **Report issues** (include):
-   - Full command you ran
-   - Last 50 lines of relevant log file
-   - Output from `docker ps -a`
+1. **Check logs**: All execution logs are in `results/logs/`
+2. **View container output**: `docker logs <container_id>`
 
 ---
 
-## Advanced Usage
+## 📚 File Format Requirements
 
-### Running with Pre-built Indices
+### FASTQ Files
 
-If you're analyzing multiple projects with the same genome, build indices once:
+**Paired-End:**
+- Forward reads: `*_1.fastq.gz` or `*_R1.fastq.gz`
+- Reverse reads: `*_2.fastq.gz` or `*_R2.fastq.gz`
 
-```bash
-# Create shared indices directory
-mkdir -p /mnt/shared_indices
+**Single-End:**
+- Files should NOT contain `_1`, `_2`, `_R1`, or `_R2` in names
 
-# Run once with index saving
-./run_pipeline.sh \
-  --project-dir /home/user/project1 \
-  --mode PE \
-  --index-dir /mnt/shared_indices
+### Genome Files
 
-# Next projects reuse these indices (10x faster)
-./run_pipeline.sh \
-  --project-dir /home/user/project2 \
-  --mode PE \
-  --index-dir /mnt/shared_indices
+**Required:**
+- Genome FASTA: `*.fna`, `*.fa`, or `*.fasta`
+- GTF annotation: `*.gtf`
+- GFF annotation: `*.gff` or `*.gff3`
 
-# Indices are cached and reused automatically
+**Notes:**
+- Files can be gzipped (`.gz` extension)
+- Must be in the same directory
+- Only one file of each type should be present
+
+### Sample Info File
+
+**Format**: Tab-separated values (TSV)
+
+**Required columns:**
+- `Sample`: Sample names (must match FASTQ file prefixes)
+- `Condition`: Experimental conditions
+
+**Example:**
+```tsv
+Sample	Condition
+ctrl1	control
+ctrl2	control
+ctrl3	control
+treat1	treated
+treat2	treated
+treat3	treated
 ```
 
-### Comparing Analysis Methods
-
-The pipeline generates 16 combinations. To compare them:
-
-```bash
-# After analysis completes, compare DEG overlap:
-# All UP genes across methods
-ls DEG/*/edgeR_*_UP.xlsx | wc -l
-
-# Find genes consistent across methods
-# (Use your favorite spreadsheet tool or R/Python)
-```
-
-### Memory and Performance Optimization
-
-**For limited resources:**
-```bash
-# Use fewer threads
-./run_pipeline.sh \
-  --project-dir ... \
-  --mode PE \
-  --threads 4  # Use only 4 cores instead of 8
-```
-
-**For maximum speed:**
-```bash
-# Use all available cores
-./run_pipeline.sh \
-  --project-dir ... \
-  --mode PE \
-  --threads $(nproc)  # Auto-detect core count
-```
-
-### Using Different Genome Files
-
-Edit `run_pipeline.sh` to update genome file paths:
-
-```bash
-# Inside run_pipeline.sh, find:
-GTF="/data/genome/genomic.gtf"
-FASTA="/data/genome/genomic.fasta"
-GFF="/data/genome/genomic.gff"
-
-# Change to your filenames:
-GTF="/data/genome/your_genome.gtf"
-FASTA="/data/genome/your_genome.fa"
-GFF="/data/genome/your_genome.gff"
-```
-
-### Custom Quality Control Settings
-
-Edit `quality_control.sh` to adjust:
-
-```bash
-# Trimming parameters (in fastp section)
-fastp -w $THREADS \
-    -i "$R1" -I "$R2" \
-    -o ... \
-    --cut_front 20 \        # Remove 20bp from 5' end
-    --cut_tail 20 \         # Remove 20bp from 3' end
-    --length_required 50 \  # Keep reads >50bp
-    --qualified_quality_phred 30  # Quality threshold
-```
+**Important:**
+- Use tabs, not spaces
+- Sample names must exactly match FASTQ prefixes
+- At least 2 conditions required
+- At least 2 replicates per condition recommended
 
 ---
 
-## Understanding Statistical Results
+## 🔄 Pipeline Workflow Details
 
-### Fold Change (FC)
+### Quality Control (Stage 1.1)
 
-**What it means:** How much a gene is over/under-expressed
+1. **FastQC** (raw reads)
+   - Read quality assessment
+   - Adapter detection
+   - GC content distribution
 
-```
-logFC = +2   →  2^2 = 4x upregulated (4 times higher)
-logFC = +1   →  2^1 = 2x upregulated (2 times higher)
-logFC = 0    →  No change
-logFC = -1   →  2^-1 = 0.5x (down to half)
-logFC = -2   →  2^-2 = 0.25x (down to quarter)
-```
+2. **fastp** (trimming)
+   - Adapter removal
+   - Quality filtering
+   - Length filtering
+   - Automatic detection of adapters
 
-### P-value vs FDR
+3. **FastQC** (trimmed reads)
+   - Post-trimming quality check
 
-**P-value:** Probability that this result occurred by chance
-- Raw p-value: Not corrected for multiple testing
-- Can be misleading when testing thousands of genes
+4. **MultiQC** (summary)
+   - Aggregates all QC reports
+   - Interactive HTML dashboard
 
-**FDR (False Discovery Rate):** Adjusted p-value
-- Corrects for testing multiple genes
-- More reliable
-- **Use FDR < 0.05** (standard threshold)
+### Alignment (Stage 1.2)
 
-### Volcano Plot Interpretation
+**Runs in parallel (3 aligners simultaneously):**
 
-**Upper Right Quadrant:** Significantly upregulated genes
-- High fold change (right of center)
-- Low FDR (high on y-axis)
-- Target genes for investigation
+1. **STAR** (2-pass alignment)
+   - Splice-aware aligner
+   - Best for: Detection of novel junctions
+   - Output: Sorted BAM files
 
-**Upper Left Quadrant:** Significantly downregulated genes
-- Negative fold change (left of center)
-- Low FDR (high on y-axis)
+2. **HISAT2**
+   - Fast splice-aware aligner
+   - Best for: Large datasets
+   - Output: Sorted BAM files
 
-**Bottom Center:** Non-significant genes
-- Either small fold changes or high p-values
-- Not of interest
+3. **Bowtie2**
+   - General-purpose aligner
+   - Best for: Non-spliced alignments
+   - Output: Sorted BAM files
 
-### PCA Plot Interpretation
+### Quantification (Stage 1.3)
 
-**Good PCA plot:**
-- Samples from same condition cluster together
-- Different conditions are well-separated
-- No obvious outliers
+**For each aligner:**
 
-**Problem PCA plot:**
-- Conditions overlap significantly → weak signal
-- One sample far from others → possible batch effect or contamination
+1. **featureCounts**
+   - Fast, counts at exon level
+   - Handles multi-mapping reads
+   - Gene-level summarization
+
+2. **HTSeq**
+   - Python-based counter
+   - Flexible counting modes
+   - Union mode (default)
+
+3. **RSEM** (STAR and Bowtie2 only)
+   - Transcript-level quantification
+   - Handles isoform abundance
+   - Expectation-maximization algorithm
+
+### DEG Analysis (Stage 2)
+
+**For each count matrix:**
+
+1. **Normalization**
+   - DESeq2: Variance-stabilizing transformation
+   - edgeR: TMM normalization
+
+2. **Differential Expression**
+   - Pairwise comparisons between conditions
+   - FDR correction (Benjamini-Hochberg)
+   - Generates UP/DOWN gene lists
+
+
+### Comparison Analysis (Stage 3)
+
 
 ---
+
+
+
+
+
+### DEG Thresholds
+
+**Conservative (publication):**
+```bash
+--log2fc 1 --fdr 0.05
+```
+
+**Moderate (exploratory):**
+```bash
+--log2fc 0.5 --fdr 0.1
+```
+
+**Lenient (hypothesis generation):**
+```bash
+--log2fc 0 --fdr 0.1
+```
+
+
+
+
+
+
+
+
+
+## 🙏 Acknowledgments
+
+- Bioconda community for tool packaging
+- Docker community for containerization support
+- All tool developers whose software powers this pipeline
+
+
+## 🗺️ Roadmap
+
+### Planned Features
+
+- [ ] Support for single-cell RNA-seq
+- [ ] Integration with Gene Ontology analysis
+- [ ] Pathway enrichment analysis
+- [ ] Interactive web dashboard
+- [ ] Salmon quantification support
+- [ ] More normalization methods
+- [ ] Batch effect correction
+- [ ] Pre-built indices download
+
+### Version History
+
+**v1.0.0** (2024-01-13)
+- Initial release
+- Support for 3 aligners, 3 quantifiers, 2 DEG tools
+- Comprehensive QC and comparison analysis
+- Docker containerization
+
+---
+
+
+
+---
+
+**Made with ❤️ for the bioinformatics community**
+
+[⬆ Back to top](#rna-seq-meta-analyst-pipeline)
 
 
