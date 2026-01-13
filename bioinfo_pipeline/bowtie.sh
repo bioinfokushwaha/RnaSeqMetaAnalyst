@@ -70,27 +70,78 @@ fi
 # ===================================================================
 # STEP 1.5: RSEM REFERENCE PREPARATION
 # ===================================================================
+# ===================================================================
+# STEP 1.5: RSEM REFERENCE PREPARATION (WITH PRE-BUILT SUPPORT)
+# ===================================================================
 echo ""
 echo "=========================================="
 echo "STEP 1.5: RSEM Reference Preparation"
 echo "=========================================="
 
-if [ ! -f "$RSEM_INDEX_DIR/rsem_ref.idx.fa" ]; then
+# Set default RSEM index directory (local)
+DEFAULT_RSEM_DIR="Indices/RSEM/Bowtie"
+RSEM_INDEX_DIR="$DEFAULT_RSEM_DIR"
+
+# Check for pre-built RSEM reference first
+if [ -n "$INDEX_DIR" ] && [ -f "$INDEX_DIR/RSEM/Bowtie/rsem_ref.idx.fa" ]; then
+    echo ">>> Checking pre-built RSEM reference from: $INDEX_DIR/RSEM/Bowtie"
+    
+    # Verify all required RSEM files exist
+    REQUIRED_RSEM_FILES=(
+        "$INDEX_DIR/RSEM/Bowtie/rsem_ref.idx.fa"
+        "$INDEX_DIR/RSEM/Bowtie/rsem_ref.n2g.idx.fa"
+        "$INDEX_DIR/RSEM/Bowtie/rsem_ref.grp"
+        "$INDEX_DIR/RSEM/Bowtie/rsem_ref.ti"
+        "$INDEX_DIR/RSEM/Bowtie/rsem_ref.transcripts.fa"
+    )
+    
+    ALL_FILES_EXIST=true
+    for file in "${REQUIRED_RSEM_FILES[@]}"; do
+        if [ ! -f "$file" ]; then
+            echo "  ⚠ Missing required file: $(basename $file)"
+            ALL_FILES_EXIST=false
+            break
+        fi
+    done
+    
+    if [ "$ALL_FILES_EXIST" = true ]; then
+        echo "  ✓ All RSEM reference files validated"
+        echo "  ✓ Using pre-built RSEM reference"
+        RSEM_INDEX_DIR="$INDEX_DIR/RSEM/Bowtie"
+    else
+        echo "  ⚠ Pre-built RSEM reference incomplete"
+        echo "  → Will build locally instead"
+        RSEM_INDEX_DIR="$DEFAULT_RSEM_DIR"
+    fi
+fi
+
+# Check if local RSEM reference already exists (from previous run)
+if [ "$RSEM_INDEX_DIR" = "$DEFAULT_RSEM_DIR" ] && [ -f "$DEFAULT_RSEM_DIR/rsem_ref.idx.fa" ]; then
+    echo "  ✓ Using existing local RSEM reference"
+fi
+
+# Build RSEM reference locally if needed
+if [ "$RSEM_INDEX_DIR" = "$DEFAULT_RSEM_DIR" ] && [ ! -f "$DEFAULT_RSEM_DIR/rsem_ref.idx.fa" ]; then
     echo ">>> Building RSEM reference (Bowtie2-based)..."
-    mkdir -p "$RSEM_INDEX_DIR"
+    echo "    This may take 10-15 minutes..."
+    mkdir -p "$DEFAULT_RSEM_DIR"
     
     rsem-prepare-reference \
         --gtf "$GTF" \
         --bowtie2 \
         --num-threads "$THREADS" \
         "$FASTA" \
-        "$RSEM_INDEX_DIR/rsem_ref"
+        "$DEFAULT_RSEM_DIR/rsem_ref"
     
-    echo "  ✓ RSEM reference created successfully"
-else
-    echo "  ✓ RSEM reference already exists"
+    if [ $? -eq 0 ]; then
+        echo "  ✓ RSEM reference created successfully"
+    else
+        echo "ERROR: RSEM reference build failed!" >&2
+        exit 1
+    fi
 fi
 
+echo "  → RSEM reference location: $RSEM_INDEX_DIR"
 # ===================================================================
 # STEP 2: BOWTIE2 ALIGNMENT
 # ===================================================================

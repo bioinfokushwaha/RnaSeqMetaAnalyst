@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+nano run_edgeR_analysis.Rv Rscript
 
 # ===========================
 # edgeR Differential Expression Analysis
@@ -37,7 +37,7 @@ count_cols_clean <- gsub("\\.bam$|_Aligned.*$|\\.fastq.*$|\\.htseq.*$", "", coln
 sampleinfo$CleanName <- gsub("\\.bam$|_Aligned.*$|\\.fastq.*$|\\.htseq.*$", "", sampleinfo$Sample)
 matching <- intersect(count_cols_clean, sampleinfo$CleanName)
 if(length(matching)==0) stop("No matching samples found!")
-count_idx <- match(count_cols_clean, sampleinfo$CleanName)
+count_idx <- match(sampleinfo$CleanName, count_cols_clean)
 valid_idx <- !is.na(count_idx)
 count_matrix <- round(as.matrix(counts[, count_idx[valid_idx]]))
 sampleinfo_matched <- sampleinfo[valid_idx, ]
@@ -52,8 +52,7 @@ keep <- filterByExpr(y)
 y <- y[keep, , keep.lib.sizes=FALSE]
 y <- calcNormFactors(y)
 
-design <- model.matrix(~0 + group)
-colnames(design) <- levels(group)
+design <- model.matrix(~group)
 y <- estimateDisp(y, design)
 fit <- glmQLFit(y, design)
 
@@ -84,21 +83,17 @@ conditions <- levels(group)
 for(i in 1:(length(conditions)-1)){
   for(j in (i+1):length(conditions)){
     c1 <- conditions[i]; c2 <- conditions[j]; comp <- paste0(c1,"_vs_",c2)
-    
-    # FIX: Properly construct contrast with group prefix
-    contrast_string <- paste0(c2, "-", c1)
-    contrast <- makeContrasts(contrasts=contrast_string, levels=design)
-    
+    contrast <- makeContrasts(contrasts=paste0(c2,"-",c1), levels=design)
     qlf <- glmQLFTest(fit, contrast=contrast)
     res <- topTags(qlf, n=Inf)$table
     if(nrow(res)==0) next
     res$Gene <- rownames(res)
-
+    
     # Volcano
     res$Status <- "NS"
     res$Status[res$FDR<FDR_THRESHOLD & res$logFC>LOG2FC_THRESHOLD] <- "UP"
     res$Status[res$FDR<FDR_THRESHOLD & res$logFC< -LOG2FC_THRESHOLD] <- "DOWN"
-
+    
     png(file.path(output_dir,paste0(filename,"_",comp,"_edgeR_Volcano.png")), width=3400, height=3400, res=600)
     print(
       ggplot(res, aes(logFC, -log10(FDR), color=Status)) +
@@ -110,12 +105,12 @@ for(i in 1:(length(conditions)-1)){
         labs(title=paste("Volcano:",filename,"-",comp))
     )
     dev.off()
-
+    
     # Save UP/DOWN
     UP <- res[res$Status=="UP",]; DOWN <- res[res$Status=="DOWN",]
     if(nrow(UP)>0) write.xlsx(UP, file.path(output_dir,paste0(filename,"_",comp,"_edgeR_UP.xlsx")), rowNames=FALSE)
     if(nrow(DOWN)>0) write.xlsx(DOWN, file.path(output_dir,paste0(filename,"_",comp,"_edgeR_DOWN.xlsx")), rowNames=FALSE)
-
+    
     results_summary <- rbind(results_summary, data.frame(Comparison=comp, UP=nrow(UP), DOWN=nrow(DOWN), Total_DEGs=nrow(res[res$FDR<FDR_THRESHOLD,])))
   }
 }
