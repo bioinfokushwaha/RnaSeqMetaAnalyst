@@ -39,9 +39,6 @@ This pipeline provides a complete solution for RNA-seq data analysis, offering:
 - [Usage](#usage)
 - [Output Files](#output-files)
 - [Advanced Options](#advanced-options)
-- [Troubleshooting](#troubleshooting)
-- [Citation](#citation)
-- [License](#license)
 
 ---
 
@@ -732,35 +729,6 @@ treat3	treated
 - Docker community for containerization support
 - All tool developers whose software powers this pipeline
 
-
-## 🗺️ Roadmap
-
-### Planned Features
-
-- [ ] Support for single-cell RNA-seq
-- [ ] Integration with Gene Ontology analysis
-- [ ] Pathway enrichment analysis
-- [ ] Interactive web dashboard
-- [ ] Salmon quantification support
-- [ ] More normalization methods
-- [ ] Batch effect correction
-- [ ] Pre-built indices download
-
-### Version History
-
-**v1.0.0** (2024-01-13)
-- Initial release
-- Support for 3 aligners, 3 quantifiers, 2 DEG tools
-- Comprehensive QC and comparison analysis
-- Docker containerization
-
----
-
-
-
----
-
-**Made with ❤️ for the bioinformatics community**
 
 [⬆ Back to top](#rna-seq-meta-analyst-pipeline)
 
