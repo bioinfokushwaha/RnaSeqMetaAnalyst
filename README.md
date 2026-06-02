@@ -799,16 +799,6 @@ Sample6     Treatment
    - FDR correction (Benjamini-Hochberg)
    - Generates UP/DOWN gene lists
 
-
-### Comparison Analysis (Stage 3)
-
-
----
-
-
-
-
-
 ### DEG Thresholds
 
 **Conservative (publication):**
@@ -826,7 +816,12 @@ Sample6     Treatment
 --log2fc 0 --fdr 0.1
 ```
 
+---
 
+### Comparison Analysis (Stage 3)
+Generates excel file of pariwise comparision matrix and number of common DEGs in 16 rows cross 16 columns and also its images for both up and downregulated genes
+
+---
 
 
 
