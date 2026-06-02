@@ -1,0 +1,21 @@
+name: rnaseq-busco
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # BUSCO 6.0.0 with its own pinned Python to avoid conflicts
+  - python=3.9
+  - busco=6.0.0
+  - sepp=4.5.5
+  # BUSCO internal dependencies (pinned to avoid solver conflicts)
+  - augustus=3.5.0
+  - blast=2.14.0
+  - prodigal=2.6.3
+  - metaeuk=6.a5d39d9
+  - r-base=4.2.3          # BUSCO needs R for plots
+  - r-ggplot2
+  - biopython=1.81
+  - pandas=1.5.3          # pinned older pandas — BUSCO 6 incompatible with pandas 2.x
+  - numpy=1.24.3
+  - matplotlib=3.7.1

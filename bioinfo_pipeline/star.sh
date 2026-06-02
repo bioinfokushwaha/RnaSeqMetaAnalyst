@@ -201,7 +201,7 @@ if [[ $MODE == "PE" ]]; then
         samtools index -@ "$THREADS" "$SORTED_BAM"
         
         # Cleanup STAR temp directory
-        rm -rf "$SAMPLE_DIR"
+#        rm -rf "$SAMPLE_DIR"
         
         echo "    ✓ $SAMPLE completed"
     done
@@ -252,7 +252,7 @@ else
         samtools index -@ "$THREADS" "$SORTED_BAM"
         
         # Cleanup STAR temp directory
-        rm -rf "$SAMPLE_DIR"
+#        rm -rf "$SAMPLE_DIR"
         
         echo "    ✓ $SAMPLE completed"
     done
