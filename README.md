@@ -78,7 +78,7 @@ docker build -t rnaseqmetaanalyst:latest .
 ### 3. Verify Installation
 
 ```bash
-docker run --rm rnaseqmetaanalyst:latest --help
+ docker run -it --rm --entrypoint /bin/bash rnaseqmetaanalyst:latest
 ```
 
 ---
