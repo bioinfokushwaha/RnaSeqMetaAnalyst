@@ -430,7 +430,7 @@ graph LR
 | `--project-dir` | Project directory path (required) | - |
 | `--mode` | Sequencing mode: SE or PE (required) | - |
 | `--threads` | Number of CPU threads | 8 |
-| `--log2fc` | Log2 fold change threshold | 0 |
+| `--log2fc` | Log2 fold change threshold | 1 |
 | `--fdr` | False discovery rate threshold | 0.05 |
 | `--pvalue` | P-value threshold | 0.05 |
 | `--sjdb-overhang` | STAR parameter (read length - 1) | 100 |
