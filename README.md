@@ -178,7 +178,7 @@ my_project/
 3. **Create sampleinfo.txt:**
 
 ```tsv
-Sample	Condition
+SampleName      CONDITION
 sample1	control
 sample2	control
 sample3	treated
@@ -218,8 +218,10 @@ project/
 │   │   ├── *.fna|*.fa|*.fasta       # Genome sequence
 │   │   ├── *.gtf                     # Gene annotation (GTF)
 │   │   └── *.gff|*.gff3             # Gene annotation (GFF)
-│   └── sampleinfo.txt                # Sample metadata (TSV)
-└── results/                          # Output directory (created)
+│   ├── sampleinfo.xlsx              # Sample metadata
+│   └── housekeeping_genes.xlsx      # Optional housekeeping genes for normalization/QC
+│
+└── results/                          # Output directory (created automatically)
 ```
 
 ### Output Structure
@@ -399,6 +401,11 @@ graph LR
 #### Run Only Comparison
 ```bash
 ./run_pipeline.sh --project-dir $(pwd) --mode PE --comparison-only
+```
+#### Run Busco Analysis to generate Housekeeping Genes
+Assume using Mammalian Genome
+```bash
+./run_pipeline1.sh --project-dir $(pwd) --busco --protein data/genome/protein.faa --lineage mammalia_odb12
 ```
 
 #### Custom DEG Thresholds
