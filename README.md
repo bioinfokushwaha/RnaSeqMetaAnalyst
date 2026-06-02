@@ -29,7 +29,7 @@ This pipeline provides a complete solution for RNA-seq data analysis, offering:
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -42,7 +42,7 @@ This pipeline provides a complete solution for RNA-seq data analysis, offering:
 
 ---
 
-## 🔧 Prerequisites
+##  Prerequisites
 
 ### System Requirements
 - **OS**: Linux, macOS, or Windows (with WSL2)
@@ -59,7 +59,7 @@ All dependencies are included in the Docker container:
 
 ---
 
-## 📥 Installation
+## Installation
 
 ### Step 1: Clone the Repository
 ```bash
@@ -83,7 +83,7 @@ docker run --rm rnaseqmetaanalyst:latest --help
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prepare Your Data
 
@@ -140,7 +140,7 @@ bash /path/to/run_pipeline.sh --project-dir $(pwd) --mode PE
 
 ---
 
-## 📁 Directory Structure
+##  Directory Structure
 
 ### Input Structure
 
@@ -208,21 +208,62 @@ results/
 
 ---
 
-## 🔬 Pipeline Stages
+## Pipeline Stages
 
 ### Stage 1: Quality Control & Alignment
 
 ```mermaid
 graph LR
+
     A[Raw FASTQ] --> B[FastQC]
     A --> C[fastp Trimming]
     C --> D[FastQC]
+
+    %% Alignment
     C --> E[STAR Alignment]
     C --> F[HISAT2 Alignment]
     C --> G[Bowtie2 Alignment]
+
+    %% Quantification
     E --> H[featureCounts]
     E --> I[HTSeq]
     E --> J[RSEM]
+
+    F --> K[featureCounts]
+    F --> L[HTSeq]
+    F --> M[RSEM]
+
+    G --> N[featureCounts]
+    G --> O[HTSeq]
+    G --> P[RSEM]
+
+    %% Differential Expression
+    H --> Q[DESeq2]
+    H --> R[edgeR]
+
+    I --> S[DESeq2]
+    I --> T[edgeR]
+
+    J --> U[DESeq2]
+    J --> V[edgeR]
+
+    K --> W[DESeq2]
+    K --> X[edgeR]
+
+    L --> Y[DESeq2]
+    L --> Z[edgeR]
+
+    M --> AA[DESeq2]
+    M --> AB[edgeR]
+
+    N --> AC[DESeq2]
+    N --> AD[edgeR]
+
+    O --> AE[DESeq2]
+    O --> AF[edgeR]
+
+    P --> AG[DESeq2]
+    P --> AH[edgeR]
 ```
 
 **Tools Used:**
@@ -340,7 +381,7 @@ graph LR
 
 ---
 
-## 📊 Output Files
+## Output Files
 
 ### Quality Control
 
@@ -391,7 +432,7 @@ graph LR
 
 ---
 
-## 🔬 Advanced Options
+## Advanced Options
 
 ### Using Pre-built Indices
 
@@ -477,9 +518,9 @@ Each pipeline combination is assigned a 3-letter code:
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
-### Common Issues
+### Possible Docker Releated Issues
 
 #### 1. Docker Permission Denied
 
@@ -598,13 +639,13 @@ cat results/logs/bowtie_*.log
 
 **Example:**
 ```tsv
-Sample	Condition
-ctrl1	control
-ctrl2	control
-ctrl3	control
-treat1	treated
-treat2	treated
-treat3	treated
+SampleName      CONDITION
+Sample1     Control
+Sample2     Control
+Sample3     Control
+Sample4     Treatment
+Sample5     Treatment
+Sample6     Treatment
 ```
 
 **Important:**
