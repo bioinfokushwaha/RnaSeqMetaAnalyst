@@ -74,11 +74,74 @@ docker build -t rnaseqmetaanalyst:latest .
 ```
 
 
-
 ### 3. Verify Installation
 
 ```bash
  docker run -it --rm --entrypoint /bin/bash rnaseqmetaanalyst:latest
+```
+## Loading a Docker Image from a `.tar.gz` Archive
+
+Use the rnaseqmetaanalyst.tar.gz file (`.tar.gz`), follow these steps to load it into Docker.
+
+### Step 1: Decompress the Archive
+
+```bash
+gunzip rnaseqmetaanalyst.tar.gz
+```
+
+This will produce:
+
+```bash
+rnaseqmetaanalyst.tar
+```
+
+Alternatively, you can extract and load in a single command:
+
+```bash
+gunzip -c rnaseqmetaanalyst.tar.gz > rnaseqmetaanalyst.tar
+```
+
+### Step 2: Load the Docker Image
+
+```bash
+docker load -i rnaseqmetaanalyst.tar
+```
+
+Expected output:
+
+```text
+Loaded image: rnaseqmetaanalyst:latest
+```
+
+### Step 3: Verify the Image
+
+```bash
+docker images
+```
+
+You should see:
+
+```text
+REPOSITORY          TAG       IMAGE ID       CREATED
+rnaseqmetaanalyst   latest    <image_id>     <date>
+```
+
+### Step 4: Run the Container
+
+```bash
+docker run --rm rnaseqmetaanalyst:latest
+```
+
+To open an interactive shell inside the container:
+
+```bash
+docker run -it --rm --entrypoint /bin/bash rnaseqmetaanalyst:latest
+```
+
+If Bash is unavailable:
+
+```bash
+docker run -it --rm --entrypoint /bin/sh rnaseqmetaanalyst:latest
 ```
 
 ---
