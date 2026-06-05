@@ -80,8 +80,11 @@ docker build -t rnaseqmetaanalyst:latest .
  docker run -it --rm --entrypoint /bin/bash rnaseqmetaanalyst:latest
 ```
 ## Loading a Docker Image from a `.tar.gz` Archive
+Download the Docker image:
 
-Use the rnaseqmetaanalyst.tar.gz file (`.tar.gz`), follow these steps to load it into Docker.
+[rnaseqmetaanalyst.tar.gz](https://drive.google.com/file/d/1nVWHJkDYgihPhgP9TKt60psnyNmXMLcI/view?usp=sharing)
+
+Use the rnaseqmetaanalyst.tar.gz file (`rnaseqmetaanalyst.tar.gz`), follow these steps to load it into Docker.
 
 ### Step 1: Decompress the Archive
 
